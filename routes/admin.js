@@ -4,28 +4,31 @@ const Request = require('../models/Request');
 const authenticateToken = require('../middleware/auth')
 const nodemailer = require('nodemailer')
 
-function sendEmail(){
+require('dotenv').config()
+
+function sendEmail(email){
 
     return new Promise((resolve, reject)=>{
 
         var transporter = nodemailer.createTransport({
             service: 'gmail',
             auth:{
-                user:'nimthara.liyanage@gmail.com',
-                pass:'sashini1003gmail'
+                user: process.env.SENDERS_EMAIL,
+                pass: process.env.SENDERS_PASS
             }
         })
 
         const mail_config = {
-            from:'nimthara.liyanage@gmail.com',
-            to:'e17190@eng.pdn.ac.lk',
-            subject: 'OCRP Account is Ready to Use',
-            text:'Your OCRP account is created. Please login to the application using your credentials'
+            from: `OCR Tech Team <${process.env.SENDERS_EMAIL}>`,
+            to: email,
+            subject: 'OCRP Account Registrations',
+            text:'Your OCRP account is ready to use. Use your credentials to login to the application.'
         }
 
         transporter.sendMail(mail_config, function(error, info){
             if(error){
-                return reject({message: 'error sending emails'})
+                console.log(error)
+                return reject({message: 'Error sending emails'})
             }
 
             return resolve({message: 'email sent successfuly'})
@@ -99,7 +102,7 @@ router.post("/accept/:id", authenticateToken,async(req,res)=>{
                 const {password,...others} = adduser._doc;
                 await Request.findByIdAndDelete(req.params.id)
 
-                sendEmail().then(response=>{
+                sendEmail(request.email).then(response=>{
                     others["message"] = "User registration successful!";
                     return res.status(200).json(others);
                 }).catch(error =>{
