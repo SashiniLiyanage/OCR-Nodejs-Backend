@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
 
 const ImageSchema = new mongoose.Schema({
-    reg_no:{
+    email:{
         type: String,
         required: true,
     },
     patient_id:{
-        type: mongoose.Schema.ObjectId,
-        required: true,
-    },
-    image_id:{
         type: String,
         required: true,
     },
@@ -28,10 +24,18 @@ const ImageSchema = new mongoose.Schema({
     lesions_appear:{
         type: Boolean,
         default: false
+    },
+    annotation:{
+        type: Object,
+        default: {}
+    },
+    predicted_cat:{
+        type: String,
+        default: ""
     }
-
 },
 {
+    versionKey: false,
     timestamps:true
 }
 );
