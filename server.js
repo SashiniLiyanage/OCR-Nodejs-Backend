@@ -1,14 +1,19 @@
 const express = require('express');
 const app = express();
 const dotenv = require('dotenv');
-const cors=require("cors");
+const cors = require("cors");
 const connectDB = require('./config/dbconfig');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
 //const PORT = process.env.PORT || 8000;
 const PORT = 5000;
 
 dotenv.config();
 app.use(express.json());
-app.use(cors())
+app.use(morgan('dev'));
+app.use(cookieParser());
+app.use(cors({credentials: true, origin: "http://localhost:3000"}));
 
 // connect to the db
 connectDB();

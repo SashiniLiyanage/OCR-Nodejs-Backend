@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const User = require('../models/User');
 const Request = require('../models/Request');
-const authenticateToken = require('../middleware/auth')
+const {generateAccessToken, generateRefreshToken, setTokenCookie, refreshToken, revokeToken, authenticateToken} = require('../middleware/auth')
 const nodemailer = require('nodemailer')
 
 require('dotenv').config()

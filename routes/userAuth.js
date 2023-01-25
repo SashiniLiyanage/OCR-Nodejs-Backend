@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/User');
 const Request = require('../models/Request');
 const bcrypt = require('bcrypt');
+const { generateAccessToken, generateRefreshToken, setTokenCookie, refreshToken, revokeToken, authenticateToken } = require('../middleware/auth');
 
 
 // user sign up
@@ -55,17 +56,54 @@ router.post("/login",async(req,res)=>{
         const validate = await bcrypt.compare(req.body.password,user.password)
         if(!validate) return res.status(400).json({message:"Wrong credentials!"})
 
-        const access_token = jwt.sign({ sub: user.email, role: user.role }, process.env.ACCESS_SECRET, { expiresIn: process.env.REFRESH_TIME })
+        const accessToken = jwt.sign({ sub: user.email, role: user.role }, process.env.ACCESS_SECRET, { expiresIn: process.env.REFRESH_TIME });
+        const refreshToken = generateRefreshToken(user, req.ip);
+        await refreshToken.save();
+
+        setTokenCookie(res, refreshToken.token);
 
         // send the user data and refresh, access tokens
         const {password,...others} = user._doc;
-        others["access_token"] = access_token;
+        // others["access_token"] = accessToken;
         others["message"] = "Successfuly logged in";
-        res.status(200).json(others)
+        console.log(accessToken, user);
+        res.status(200).json({accessToken : {token: accessToken}, ref: user, others})
         
     }catch(error){
+        console.log(error)
         res.status(500).json(error)
     }
+})
+
+router.post('/refreshToken', async (req, res) => {
+    const token = req.cookies.refreshToken;
+    if (!token) return res.status(400).json({success: false, message: 'Token is required'});
+
+    const ipAddress = req.ip;
+
+    refreshToken(token, ipAddress)
+    .then(({accessToken, refreshToken, ref}) => {
+        setTokenCookie(res, refreshToken,);
+        res.json({success: true, message: 'Refresh token successful', ref: ref, accessToken: {token: accessToken}});
+    })
+    .catch(err => {
+        console.log(err);
+        res.status(400).json({success: false, message: err.message});
+    })
+})
+
+router.post('/revokeToken', authenticateToken, async (req, res) => {
+    const token = req.body.accessToken || req.cookies.refreshToken;
+    const ipAddress = req.ip;
+
+    if (!token) return res.status(400).json({success: false, message: 'Token is required'});
+
+    if (!req.ownsToken(token)) return res.status(403).json({success: false, message: 'You are not authorized to revoke this token'});
+
+    revokeToken(token, ipAddress)
+    .then(() => res.json({success: true, message: 'Token revoked'}))
+    .catch(err => res.status(400).json({success: false, message: err.message}));
+
 })
 
 module.exports = router;

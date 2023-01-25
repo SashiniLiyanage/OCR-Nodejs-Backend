@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;  
 
 const UserSchema = new mongoose.Schema({
     username:{
@@ -22,6 +23,13 @@ const UserSchema = new mongoose.Schema({
         type: Array,
         required: true,
         default:[2],
+    },
+    ref : {
+        type: Schema.Types.ObjectId,
+        required: true
+    },
+    ownsToken : {
+        type: String
     }
 },
 {
