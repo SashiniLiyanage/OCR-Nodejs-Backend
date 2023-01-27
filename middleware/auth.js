@@ -52,12 +52,12 @@ const refreshToken = async (token, ipAddress) => {
 
     var user = await User.findById(refreshToken.user).lean();
 
-    // // Replace the old refresh token with a new one.
-    // const newRefreshToken = generateRefreshToken(refreshToken.user, ipAddress);
-    // refreshToken.revokedAt = Date.now();
-    // refreshToken.replacedByToken = newRefreshToken.token;
-    // await refreshToken.save();
-    // await newRefreshToken.save();
+    // Replace the old refresh token with a new one.
+    const newRefreshToken = generateRefreshToken(refreshToken.user, ipAddress);
+    refreshToken.revokedAt = Date.now();
+    refreshToken.replacedByToken = newRefreshToken.token;
+    await refreshToken.save();
+    await newRefreshToken.save();
 
     const accessToken = generateAccessToken(user);
 

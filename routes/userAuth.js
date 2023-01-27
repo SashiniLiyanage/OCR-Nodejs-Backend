@@ -66,8 +66,7 @@ router.post("/login",async(req,res)=>{
         const {password,...others} = user._doc;
         // others["access_token"] = accessToken;
         others["message"] = "Successfuly logged in";
-        console.log(accessToken, user);
-        res.status(200).json({accessToken : {token: accessToken}, ref: user, others})
+        res.status(200).json({accessToken : {token: accessToken, expiry: process.env.REFRESH_TIME}, ref: user, others})
         
     }catch(error){
         console.log(error)
@@ -84,7 +83,7 @@ router.post('/refreshToken', async (req, res) => {
     refreshToken(token, ipAddress)
     .then(({accessToken, refreshToken, ref}) => {
         setTokenCookie(res, refreshToken,);
-        res.json({success: true, message: 'Refresh token successful', ref: ref, accessToken: {token: accessToken}});
+        res.json({success: true, message: 'Refresh token successful', ref: ref, accessToken: {token: accessToken, expiry: process.env.REFRESH_TIME}});
     })
     .catch(err => {
         console.log(err);
