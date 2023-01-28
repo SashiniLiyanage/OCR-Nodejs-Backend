@@ -22,14 +22,7 @@ const UserSchema = new mongoose.Schema({
     role:{
         type: Array,
         required: true,
-        default:[2],
-    },
-    ref : {
-        type: Schema.Types.ObjectId,
-        required: true
-    },
-    ownsToken : {
-        type: String
+        default:[3],
     }
 },
 {

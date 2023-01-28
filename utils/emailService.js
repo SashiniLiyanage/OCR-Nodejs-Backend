@@ -16,7 +16,7 @@ const body = (type, message, name)=>{
             return    `
                     <p>Hello <b>${name}</b>!</p>
                     <p>Thank you for signing up for OCR.</p>
-                    <p>We regret to inform you that <span style="color:red;">your account activation was reject</span>. To learn more, please contact the system administrator.</p>
+                    <p>We regret to inform you that <span style="color:red;">your account activation was rejected</span>. To learn more, please contact the system administrator.</p>
                     <p>Admin message: ${message}</p>
                     <br/>
                     The OCR tech team,<br/>

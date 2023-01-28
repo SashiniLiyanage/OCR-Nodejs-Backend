@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/User');
 const Request = require('../models/Request');
 const bcrypt = require('bcrypt');
-const { generateAccessToken, generateRefreshToken, setTokenCookie, refreshToken, revokeToken, authenticateToken } = require('../middleware/auth');
+const { generateRefreshToken, setTokenCookie, refreshToken, revokeToken, authenticateToken } = require('../middleware/auth');
 
 
 // user sign up

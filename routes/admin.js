@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Request = require('../models/Request');
 const {authenticateToken} = require('../middleware/auth')
 const emailService = require("../utils/emailService");
+const bcrypt = require('bcrypt');
 
 require('dotenv').config()
 
@@ -14,7 +15,7 @@ router.get('/requests', authenticateToken, async(req, res)=>{
 
 
     }catch(err){
-        return res.status(500).json({message: err})
+        return res.status(500).json(err)
     }
 })
 
@@ -31,7 +32,7 @@ router.get('/requests/:id', authenticateToken, async(req, res)=>{
         } 
 
     }catch(err){
-        return res.status(500).json({message: err})
+        return res.status(500).json(err)
     }
 })
 
@@ -59,8 +60,8 @@ router.post("/requests/:id", authenticateToken,async(req,res)=>{
         }else{
             return res.status(404).json({message:"Request not found"})
         } 
-    }catch(error){
-        return res.status(500).json({message: error})
+    }catch(err){
+        return res.status(500).json(err)
     } 
 })
 
@@ -106,8 +107,119 @@ router.post("/accept/:id", authenticateToken,async(req,res)=>{
         }else{
             return res.status(404).json({message:"Request not found"})
         } 
-    }catch(error){
-        return res.status(500).json({message: error})
+    }catch(err){
+        return res.status(500).json(err)
+    } 
+})
+
+// get all reviewers
+router.get('/reviewers', authenticateToken, async(req, res)=>{
+    try{
+        const reviewers = await User.find({role: { "$in" : [2]}},{username:1 ,_id:1, reg_no:1})
+        return res.status(200).json(reviewers)
+
+    }catch(err){
+        return res.status(500).json(err)
+    }
+})
+
+
+router.get('/users/:id', authenticateToken, async(req, res)=>{
+    try{
+        const user = await User.findById(req.params.id)
+
+        if(user){
+            user.password = undefined;
+            return res.status(200).json(user);
+                
+        }else{
+            return res.status(404).json({message:"User not found"})
+        } 
+
+    }catch(err){
+        return res.status(500).json(err)
+    }
+})
+
+
+// update users
+router.post("/update/user/:id", authenticateToken,async(req,res)=>{
+    try{
+        let user = await User.findById(req.params.id)
+
+        if(user){
+
+            try{
+                const update = await User.findOneAndUpdate({_id:req.params.id}, {
+                    username: req.body.username,
+                    role: req.body.role,
+                });
+
+                user = await User.findById(req.params.id);
+
+                const {password,...others} = user._doc;
+                others["message"] = "User details updated succesfully";
+                return res.status(200).json(user);
+                
+            }catch (error) {
+                return res.status(500).json({message:"User details update failed"});
+            }
+            
+        }else{
+            return res.status(404).json({message:"User not found"})
+        } 
+    }catch(err){
+        return res.status(500).json(err)
+    } 
+})
+
+
+// delete users
+router.post("/delete/user/:id", authenticateToken,async(req,res)=>{
+    try{
+        let user = await User.findById(req.params.id)
+        if(user){
+            try{
+                await User.findByIdAndDelete(req.params.id);
+                return res.status(200).json({message:"User deleted successfully"});
+                
+            }catch (error) {
+                return res.status(500).json({message:"User deletion failed"});
+            }
+            
+        }else{
+            return res.status(404).json({message:"User not found"})
+        } 
+    }catch(err){
+        return res.status(500).json(err)
+    } 
+})
+
+// reset user password
+router.post("/reset/user/:id", authenticateToken,async(req,res)=>{
+    try{
+        let user = await User.findById(req.params.id)
+        if(user){
+            try{
+                
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(req.body.password,salt);
+
+                const update = await User.findOneAndUpdate({_id:req.params.id}, {
+                    password: hashedPassword,
+                });
+
+                return res.status(200).json({message:"User password reseted successfully"});
+                
+            }catch (error) {
+                return res.status(500).json({message:"User deletion failed"});
+            }
+            
+        }else{
+            return res.status(404).json({message:"User not found"})
+        } 
+    }catch(err){
+        return res.status(500).json(err)
     } 
 })
 
