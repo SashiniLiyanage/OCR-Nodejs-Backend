@@ -69,7 +69,7 @@ router.post("/login",async(req,res)=>{
         res.status(200).json({accessToken : {token: accessToken, expiry: process.env.REFRESH_TIME}, ref: user, others})
         
     }catch(error){
-        console.log(error)
+        // console.log(error)
         res.status(500).json(error)
     }
 })
@@ -86,7 +86,7 @@ router.post('/refreshToken', async (req, res) => {
         res.json({success: true, message: 'Refresh token successful', ref: ref, accessToken: {token: accessToken, expiry: process.env.REFRESH_TIME}});
     })
     .catch(err => {
-        console.log(err);
+        // console.log(err);
         res.status(400).json({success: false, message: err.message});
     })
 })

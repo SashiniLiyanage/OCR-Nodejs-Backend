@@ -100,7 +100,7 @@ const authenticateToken = async(req, res , next) =>{
         
         next();
     }catch(error){
-        console.log(error)
+        // console.log(error)
         res.status(401).json({success: false, message: error.message})
     }
 }
