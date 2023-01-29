@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Patient = require('../models/Patient');
 const User = require('../models/User');
-const {generateAccessToken, generateRefreshToken, setTokenCookie, refreshToken, revokeToken, authenticateToken} = require('../middleware/auth')
+const {authenticateToken} = require('../middleware/auth')
 
 router.post("/add", async(req,res)=>{
     try{
