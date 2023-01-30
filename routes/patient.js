@@ -4,25 +4,59 @@ const Patient = require('../models/Patient');
 const User = require('../models/User');
 const {authenticateToken} = require('../middleware/auth')
 
+// add new patient
 router.post("/add", async(req,res)=>{
     try{
     
-        const patientid = await Patient.findOne({patient_id: req.body.patient_id});
-        if(patientid){return res.status(401).json({message:`The patient id is already registered`});}
-        
-        
+        const patient = await Patient.findOne({patient_id: req.body.patient_id});
+
+        if(patient){
+
+            const others = patient._doc;
+            others["message"] = "Patient Id already exists";
+            return res.status(200).json(others);
+
+        }else{
+
             const newPatient = new Patient({
                 patient_id: req.body.patient_id,
+            })
+            
+            const patient = await newPatient.save();
+            const others = patient._doc;
+            others["message"] = "Successfully added";
+            res.status(200).json(others);
+
+        }
+
+    }catch(error){
+        res.status(500).json(error);
+    }
+})
+
+//update patient details
+router.post("/update/:id", async(req,res)=>{
+    try{
+    
+        const patient = await Patient.findById(req.params.id);
+
+        if(!patient){
+            return res.status(401).json({messsage:"Patient ID doesnt exists!"});
+        }else{
+
+            const update = await Patient.findOneAndUpdate({_id:req.params.id}, {
                 gender: req.body.gender,
                 age: req.body.age,
                 risk_factors: req.body.risk_factors,
                 histo_diagnosis: req.body.histo_diagnosis,
                 category: req.body.category,
-            })
-            const patient = await newPatient.save();
-            const others = patient._doc;
+            });
+
+            const updatedPatient = await Patient.findById(req.params.id);
+            const others = updatedPatient._doc;
             others["message"] = "Successfully added";
             res.status(200).json(others);
+        }
 
     }catch(error){
         res.status(500).json(error);
@@ -32,7 +66,7 @@ router.post("/add", async(req,res)=>{
 // get all patients
 router.get('/all', authenticateToken, async(req, res)=>{
     try{
-        const patients = await Patient.find()
+        const patients = await Patient.find({},{_id:1, gender:1, category:1, patient_id:1, age:1});
 
         return res.status(200).json({patients: patients})
 
@@ -43,5 +77,20 @@ router.get('/all', authenticateToken, async(req, res)=>{
 })
 
 
+
+router.get('/:id', authenticateToken, async(req, res)=>{
+    try{
+        const patient = await Patient.findById(req.params.id)
+
+        if(patient){
+            return res.status(200).json(patient);
+        }else{
+            return res.status(404).json({message:"Patient ID not found"})
+        } 
+
+    }catch(err){
+        return res.status(500).json(err)
+    }
+})
 
 module.exports = router ;

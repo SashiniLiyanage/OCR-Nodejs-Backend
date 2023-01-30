@@ -4,11 +4,14 @@ const PatientSchema = new mongoose.Schema({
     patient_id:{
         type: String,
         required: true,
-        default:""
     },
     risk_factors:{
         type: Object,
-        default: {}
+        default: {
+            smoking: false,
+            alcohol: false,
+            betel: false
+        }
     },
     age:{
         type: Number,
@@ -16,7 +19,7 @@ const PatientSchema = new mongoose.Schema({
     },
     gender:{
         type: String,
-        default:"",
+        default: "",
     },
     histo_diagnosis:{
         type: String,
@@ -24,7 +27,7 @@ const PatientSchema = new mongoose.Schema({
     },
     category:{
         type: String,
-        default: ""
+        default: "Unknown"
     }
 },
 {
