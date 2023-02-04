@@ -9,7 +9,7 @@ const ImageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    folder:{
+    image_name:{
         type: String,
         default: ""                                    
     },
@@ -26,8 +26,8 @@ const ImageSchema = new mongoose.Schema({
         default: false
     },
     annotation:{
-        type: Object,
-        default: {}
+        type: Array,
+        default: []
     },
     predicted_cat:{
         type: String,
