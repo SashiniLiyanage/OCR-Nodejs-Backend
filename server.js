@@ -41,8 +41,8 @@ app.use("/api/auth",userAuthRoute);
 const adminAuthRoute = require('./routes/adminAuth');
 app.use("/api/admin/auth",adminAuthRoute);
 
-// const researcherAuthRoute = require('./routes/researcher_auth');
-// app.use("/api/researcher/auth",researcherAuthRoute);
+const imagesRoute = require('./routes/image');
+app.use("/api/image",imagesRoute);
 
 const adminRoute = require('./routes/admin');
 app.use("/api/admin", adminRoute);
@@ -50,6 +50,9 @@ app.use("/api/admin", adminRoute);
 const patientRoute = require('./routes/patient');
 app.use("/api/user/patient", patientRoute);
 
+
+app.use("/Storage",express.static(path.join(__dirname, '/Storage')))
+app.use("/Storage/images",express.static(path.join(__dirname, '/Storage/images')))
 
 let storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -73,6 +76,7 @@ let storage = multer.diskStorage({
 
 
 const upload = multer({storage:storage}).array('files', 12)
+const update = multer({storage:storage}).single('files')
 
 app.post("/api/user/patient/images/:id", authenticateToken, async(req,res)=>{
   try{
@@ -80,18 +84,53 @@ app.post("/api/user/patient/images/:id", authenticateToken, async(req,res)=>{
       upload(req, res, function (err) {
         if (err instanceof multer.MulterError) {
           return res.status(500).json(err);
+          
         } else if (err) {
           return res.status(500).json(err);
-        }
+          
+        }else{
 
-          Image.insertMany(JSON.parse(req.body.data))
+          const data = JSON.parse(req.body.data)
+          Image.insertMany(data)
           .then(()=>{
-            return res.status(200).json("Images Uploaded Successfully");
+            return res.status(200).json({message:"Images Uploaded Successfully"});
           })
           .catch((err)=>{
-            console.log(err)
             return res.status(500).json(err);
           })
+        }
+      })
+
+
+  }catch(error){
+      res.status(500).json(error);
+      console.log(error)
+  }
+})
+
+app.post("/api/images/update", authenticateToken, async(req,res)=>{
+  try{
+    
+      update(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+          console.log(err)
+          return res.status(500).json(err);
+          
+        } else if (err) {
+          console.log(err)
+          return res.status(500).json(err);
+          
+        }else{        
+          const data = JSON.parse(req.body.data)
+
+          Image.findByIdAndUpdate(data._id, {
+            annotation: []
+          }).then(()=>{
+            return res.status(200).json({message:"Image updated Successfully"});
+          }).catch((err)=>{
+            return res.status(500).json(err);
+          });
+        }
       })
 
 
