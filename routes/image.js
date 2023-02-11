@@ -5,7 +5,16 @@ const Patient = require('../models/Patient');
 const User = require('../models/User');
 const {authenticateToken} = require('../middleware/auth')
 
+router.get('/all', authenticateToken, async(req, res)=>{
+    try{
+    
+        const images = await Image.find({email: req.email});
+        return res.status(200).json({images});       
 
+    }catch(err){
+        return res.status(500).json(err)
+    }
+})
 
 router.get('/:id', authenticateToken, async(req, res)=>{
     try{

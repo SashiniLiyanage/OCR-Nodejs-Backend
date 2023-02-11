@@ -10,7 +10,8 @@ const { generateRefreshToken, setTokenCookie, refreshToken, revokeToken, authent
 // add to request list
 router.post("/signup",async(req,res)=>{
     try{
-        const user = await Request.findOne({reg_no: req.body.reg_no});
+        const reqreg = await Request.findOne({reg_no: req.body.reg_no});
+        const reqemail = await Request.findOne({email: req.body.email});
         const userregno = await User.findOne({reg_no: req.body.reg_no});
         const email = await User.findOne({email: req.body.email});
         
@@ -21,15 +22,8 @@ router.post("/signup",async(req,res)=>{
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password,salt);
 
-        if(user){
-            const update = Request.findOne({reg_no: req.body.reg_no},{
-                $set : {
-                    username: req.body.username,
-                    email: req.body.email,
-                    password: hashedPassword
-                }
-            });
-            return res.status(200).json({message:"The Request sent successfully"});
+        if(reqreg||reqemail){
+            return res.status(200).json({message:"A request for registration already exists."});
         }else{
             const newUser = new Request({
                 reg_no: req.body.reg_no,
@@ -39,7 +33,7 @@ router.post("/signup",async(req,res)=>{
             })
             const user = await newUser.save();
             const {password,...others} = user._doc;
-            others["message"] = "Successfully signed in";
+            others["message"] = "Request is sent successfully. You will receive an Email on acceptance";
             return res.status(200).json(others);
         }
 
