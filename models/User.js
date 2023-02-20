@@ -13,6 +13,18 @@ const UserSchema = new mongoose.Schema({
     },
     reg_no:{
         type: String,
+        required: true,
+    },
+    hospital:{
+        type: String,
+        required: true,
+    },
+    designation:{
+        type: String,
+        default: ""
+    },
+    contact_no:{
+        type: String,
         default: ""
     },
     password:{
