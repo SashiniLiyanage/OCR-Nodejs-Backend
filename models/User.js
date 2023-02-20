@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema(
     reg_no: {
       type: String,
       required: true,
+      unique: true,
     },
     hospital: {
       type: String,
@@ -34,7 +35,7 @@ const UserSchema = new mongoose.Schema(
     },
     availability: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     role: {
       type: Array,
