@@ -138,6 +138,7 @@ router.get("/reviewers", authenticateToken, async (req, res) => {
   }
 });
 
+// get a specific user
 router.get("/users/:id", authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -184,7 +185,7 @@ router.post("/update/user/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// delete users
+// delete a user
 router.post("/delete/user/:id", authenticateToken, async (req, res) => {
   try {
     let user = await User.findById(req.params.id);
