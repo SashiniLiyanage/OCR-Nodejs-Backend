@@ -5,7 +5,7 @@ const {authenticateToken} = require('../middleware/auth');
 
 require('dotenv').config()
 
-router.get('/hospitals', authenticateToken, async(req, res)=>{
+router.get('/hospitals', async(req, res)=>{
     try{
         const hospital = await Hospital.find();
         return res.status(200).json(hospital);
