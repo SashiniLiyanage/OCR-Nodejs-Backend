@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const User = require('../models/User');
 const Request = require('../models/Request');
+const Hospital = require('../models/Hospital');
 const {authenticateToken} = require('../middleware/auth')
 const emailService = require("../utils/emailService");
 const bcrypt = require('bcrypt');
@@ -223,5 +224,34 @@ router.post("/reset/user/:id", authenticateToken,async(req,res)=>{
     } 
 })
 
+
+// add hospitals
+router.post("/hospital", authenticateToken,async(req,res)=>{
+    try{
+        let hospital = await Hospital.findOne({name:req.body.name});
+
+        if(!hospital){
+
+            try{
+                const newHospital =  new Hospital({
+                    name: req.body.name,
+                    details: req.body.details
+                });
+
+                const addHospital = await newHospital.save();
+
+                return res.status(200).json({message:"Hospital is added successfully!"});
+                
+            }catch (error) {
+                return res.status(500).json({message:"User details update failed"});
+            }
+            
+        }else{
+            return res.status(401).json({message:'Hospital is already added'})
+        } 
+    }catch(err){
+        return res.status(500).json(err)
+    } 
+})
 
 module.exports = router;

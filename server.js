@@ -50,6 +50,9 @@ app.use("/api/admin", adminRoute);
 const patientRoute = require('./routes/patient');
 app.use("/api/user/patient", patientRoute);
 
+const userRoute = require('./routes/user');
+app.use("/api/user", userRoute);
+
 
 app.use("/Storage",express.static(path.join(__dirname, '/Storage')))
 app.use("/Storage/images",express.static(path.join(__dirname, '/Storage/images')))
