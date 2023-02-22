@@ -1,19 +1,18 @@
+const router = require("express").Router();
+const Hospital = require("../models/Hospital");
+const User = require("../models/User");
+const { authenticateToken } = require("../middleware/auth");
 
-const router = require('express').Router();
-const Hospital = require('../models/Hospital');
-const {authenticateToken} = require('../middleware/auth');
+require("dotenv").config();
 
-require('dotenv').config()
-
-router.get('/hospitals', async(req, res)=>{
-    try{
-        const hospital = await Hospital.find();
-        return res.status(200).json(hospital);
-                
-    }catch(err){
-        return res.status(500).json(err)
-    }
-})
+router.get("/hospitals", async (req, res) => {
+  try {
+    const hospital = await Hospital.find();
+    return res.status(200).json(hospital);
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
 
 //change the password
 router.post("/password", authenticateToken, async (req, res) => {
@@ -52,10 +51,28 @@ router.post("/update", authenticateToken, async (req, res) => {
     const user = await User.findOne({ email: req.email });
 
     if (user) {
-      const update = await User.findOneAndUpdate(
+      const updateUsername = await User.findOneAndUpdate(
         { email: req.email },
         {
           username: req.body.username,
+        }
+      );
+      const updateHospital = await User.findOneAndUpdate(
+        { email: req.email },
+        {
+          username: req.body.hospital,
+        }
+      );
+      const updateContactNo = await User.findOneAndUpdate(
+        { email: req.email },
+        {
+          username: req.body.contact_no,
+        }
+      );
+      const updateAvailability = await User.findOneAndUpdate(
+        { email: req.email },
+        {
+          username: req.body.availability,
         }
       );
 
