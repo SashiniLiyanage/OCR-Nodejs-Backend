@@ -63,6 +63,29 @@ router.post("/update/:id", async(req,res)=>{
     }
 })
 
+router.get("/search", async(req, res) => {
+    console.log(req.query.field);
+    try{
+        let result = await Patient.aggregate([
+            {
+                "$search": {
+                    "autocomplete": {
+                        "query": `${req.query.query}`,
+                        "path" : `${req.query.field}`,
+                        "fuzzy": {
+                            "maxEdits": 2,
+                            "prefixLength": 3
+                        }
+                    }
+                }
+            }
+        ]);
+        res.send(result);
+    } catch(e) {
+        res.status(500).send({ message : e.message});
+    }
+});
+
 // get all patients
 router.get('/all', authenticateToken, async(req, res)=>{
     try{
