@@ -8,7 +8,26 @@ const ReviewSchema = new mongoose.Schema(
       ref: "TeleConEntry",
       required: true,
     },
-    review_text: {
+    provisional_diagnosis: {
+      type: mongoose.Types.ObjectId,
+      ref: "Option",
+      required: true,
+    },
+    management_suggestions: {
+      type: mongoose.Types.ObjectId,
+      ref: "Option",
+      required: true,
+    },
+    review_suggestions: {
+      type: mongoose.Types.ObjectId,
+      ref: "Option",
+      required: true,
+    },
+    review_comment: {
+      type: String,
+      default: "",
+    },
+    other_comments: {
       type: String,
       default: "",
     },
