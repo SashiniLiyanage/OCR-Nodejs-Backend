@@ -9,19 +9,16 @@ const ReviewSchema = new mongoose.Schema(
       required: true,
     },
     provisional_diagnosis: {
-      type: mongoose.Types.ObjectId,
-      ref: "Option",
-      required: true,
+      type: String,
+      default: "",
     },
     management_suggestions: {
-      type: mongoose.Types.ObjectId,
-      ref: "Option",
-      required: true,
+      type: String,
+      default: "",
     },
     review_suggestions: {
-      type: mongoose.Types.ObjectId,
-      ref: "Option",
-      required: true,
+      type: String,
+      default: "",
     },
     review_comment: {
       type: String,
