@@ -6,14 +6,18 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       required: true,
     },
-    assignees: {
-      type: Array,
-      default: [],
-    },
-    images: {
-      type: Array,
-      default: [],
-    },
+    assignees: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Reviewer",
+      },
+    ],
+    images: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Image",
+      },
+    ],
     complaint: {
       type: String,
       default: "",
@@ -36,11 +40,8 @@ const TeleConEntrySchema = new mongoose.Schema(
     },
     reviews: [
       {
-        reviewer: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        comment: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Review",
       },
     ],
   },
