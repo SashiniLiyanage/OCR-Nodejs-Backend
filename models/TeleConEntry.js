@@ -4,6 +4,7 @@ const TeleConEntrySchema = new mongoose.Schema(
   {
     patient_id: {
       type: mongoose.Schema.ObjectId,
+      ref: "Patient",
       required: true,
     },
     assignees: [
