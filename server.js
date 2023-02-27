@@ -30,7 +30,7 @@ app.listen(PORT, () => {
 
 
 app.get('/',(req, res) => {
-  res.send("Welcome to server!")
+  res.send("Welcome to server! this is server side test")
 });
 
 
