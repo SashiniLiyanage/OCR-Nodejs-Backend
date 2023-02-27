@@ -49,18 +49,18 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-const ReviewerSchema = new mongoose.Schema({
-  availability: {
-    type: Boolean,
-    default: true,
-  },
-  teleConEntry_id: [
-    {
-      type: mongoose.Schema.ObjectId,
-      ref: "TeleConEntry",
-    },
-  ],
-}).extends(UserSchema);
+// const ReviewerSchema = new mongoose.Schema({
+//   availability: {
+//     type: Boolean,
+//     default: true,
+//   },
+//   teleConEntry_id: [
+//     {
+//       type: mongoose.Schema.ObjectId,
+//       ref: "TeleConEntry",
+//     },
+//   ],
+// }).extends(UserSchema);
 
 module.exports = mongoose.model("User", UserSchema);
-module.exports = mongoose.model("Reviewer", ReviewerSchema);
+// module.exports = mongoose.model("Reviewer", ReviewerSchema);
