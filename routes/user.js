@@ -14,6 +14,15 @@ router.get("/hospitals", async (req, res) => {
   }
 });
 
+router.get("/hospitals/:id", async (req, res) => {
+  try {
+    const hospital = await Hospital.findById(req.params.id);
+    return res.status(200).json(hospital);
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
 //change the password
 router.post("/password", authenticateToken, async (req, res) => {
   try {
