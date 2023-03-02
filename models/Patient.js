@@ -1,34 +1,39 @@
 const mongoose = require('mongoose');
 
 const PatientSchema = new mongoose.Schema({
-    patient_id:{
+    patient_id: {
         type: String,
         required: true,
-    },
-    risk_factors:{
-        type: Object,
-        default: {
-            smoking: false,
-            alcohol: false,
-            betel: false
-        }
-    },
-    age:{
-        type: Number,
-        default: 0,
-    },
-    gender:{
+      },
+      clinician_id: {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      risk_factors: {
+        type: Array,
+        default: [],
+      },
+      DOB: {
+        type: Date,
+        required: true,
+      },
+      gender: {
         type: String,
         default: "",
-    },
-    histo_diagnosis:{
+      },
+      histo_diagnosis: {
         type: String,
-        default: ""
-    },
-    category:{
+        default: "",
+      },
+      consent_form: {
         type: String,
-        default: "Unknown"
-    }
+        default: "",
+      },
 },
 {
     versionKey: false,
