@@ -56,7 +56,7 @@ router.post("/hospitals/update", async (req, res) => {
       const updatecontact_no = await Hospital.findOneAndUpdate(
         { _id: data._id },
         {
-          contact_no: body.contact_no,
+          contact_no: body.number,
         }
       );
 
