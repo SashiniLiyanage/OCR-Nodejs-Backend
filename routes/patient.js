@@ -20,7 +20,7 @@ router.post("/add", authenticateToken, async (req, res) => {
     } else {
       const newPatient = new Patient({
         patient_id: req.body.patient_id,
-        clinician_id: req.body.clinician_id,
+        clinician_id: requestedClinician._id,
         name: req.body.name,
         risk_factors: req.body.risk_factors,
         DOB: req.body.DOB,
