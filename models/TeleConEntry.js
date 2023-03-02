@@ -23,9 +23,12 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    duration: {
-      type: mongoose.Schema.Types.Duration, // you can provide a duration value as a string in the format HH:mm:ss
-      required: true,
+    startTime: {
+      type: Date,
+      default: Date,
+    },
+    endTime: {
+      type: Date,
     },
     Findings: {
       type: String,
