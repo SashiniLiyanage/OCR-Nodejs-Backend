@@ -64,23 +64,8 @@ router.post("/update", authenticateToken, async (req, res) => {
         { email: req.email },
         {
           username: req.body.username,
-        }
-      );
-      const updateHospital = await User.findOneAndUpdate(
-        { email: req.email },
-        {
           username: req.body.hospital,
-        }
-      );
-      const updateContactNo = await User.findOneAndUpdate(
-        { email: req.email },
-        {
           username: req.body.contact_no,
-        }
-      );
-      const updateAvailability = await User.findOneAndUpdate(
-        { email: req.email },
-        {
           username: req.body.availability,
         }
       );
@@ -89,7 +74,7 @@ router.post("/update", authenticateToken, async (req, res) => {
 
       const { password, ...others } = user._doc;
       others["message"] = "User details updated succesfully";
-      return res.status(200).json(user);
+      return res.status(200).json(others);
     } else {
       return res.status(401).json({ message: "User Not Found" });
     }
