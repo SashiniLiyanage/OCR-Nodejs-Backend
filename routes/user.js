@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Hospital = require("../models/Hospital");
 const User = require("../models/User");
+const TeleConEntry = require("../models/TeleConEntry");
 const { authenticateToken } = require("../middleware/auth");
 
 require("dotenv").config();
@@ -77,6 +78,45 @@ router.post("/update", authenticateToken, async (req, res) => {
       return res.status(200).json(others);
     } else {
       return res.status(401).json({ message: "User Not Found" });
+    }
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
+// add a teleconsultation entry
+router.post("entry/add", authenticateToken, async (req, res) => {
+  try {
+    // get the clinincian who requested the entry addition
+    const requestedClinician = await User.findOne({ email: req.email });
+
+    // create a new entry document
+    if (requestedClinician) {
+      const releventPatient = await Patient.findOne({
+        patient_id: req.body.patient_id,
+      });
+      if (releventPatient) {
+        const newEntry = new TeleConEntry({
+          patient_id: req.body.patient_id,
+          startTime: req.body.start_time,
+          endTime: req.body.end_time,
+          complaint: req.body.complaint,
+          findings: req.body.findings,
+          currentHabits: req.body.currentHabits,
+          reports: req.body.reports,
+          assignees: req.body.assignees,
+          reviews: req.body.reviews,
+        });
+
+        const savedEntry = await newEntry.save();
+        const responseDoc = savedEntry._doc;
+        responseDoc["message"] = "Successfully created!";
+        res.status(200).json(responseDoc);
+      } else {
+        return res.status(404).json({ message: "Patient is not registered" });
+      }
+    } else {
+      return res.status(404).json({ message: "Unauthorized Access" });
     }
   } catch (error) {
     res.status(500).json(error);
