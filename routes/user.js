@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Hospital = require("../models/Hospital");
 const User = require("../models/User");
+const Patient = require("../models/Patient");
 const TeleConEntry = require("../models/TeleConEntry");
 const { authenticateToken } = require("../middleware/auth");
 
@@ -94,6 +95,7 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
     if (requestedClinician) {
       const releventPatient = await Patient.findOne({
         patient_id: req.body.patient_id,
+        clinician_id: requestedClinician._id,
       });
       if (releventPatient) {
         const newEntry = new TeleConEntry({
@@ -119,7 +121,7 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Unauthorized Access" });
     }
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json({ error: error, message: error.message });
   }
 });
 
