@@ -85,7 +85,7 @@ router.post("/update", authenticateToken, async (req, res) => {
 });
 
 // add a teleconsultation entry
-router.post("entry/add", authenticateToken, async (req, res) => {
+router.post("/entry/add", authenticateToken, async (req, res) => {
   try {
     // get the clinincian who requested the entry addition
     const requestedClinician = await User.findOne({ email: req.email });
