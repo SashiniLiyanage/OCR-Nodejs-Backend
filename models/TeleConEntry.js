@@ -26,11 +26,14 @@ const TeleConEntrySchema = new mongoose.Schema(
     startTime: {
       type: Date,
       default: Date,
+      required: true,
     },
     endTime: {
       type: Date,
+      default: Date,
+      required: true,
     },
-    Findings: {
+    findings: {
       type: String,
       default: "",
     },
