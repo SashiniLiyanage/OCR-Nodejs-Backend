@@ -37,6 +37,12 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    teleConEntry_id: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "TeleConEntry",
+      },
+    ],
     role: {
       type: Array,
       required: true,
@@ -54,12 +60,12 @@ const UserSchema = new mongoose.Schema(
 //     type: Boolean,
 //     default: true,
 //   },
-//   teleConEntry_id: [
-//     {
-//       type: mongoose.Schema.ObjectId,
-//       ref: "TeleConEntry",
-//     },
-//   ],
+// teleConEntry_id: [
+//   {
+//     type: mongoose.Schema.ObjectId,
+//     ref: "TeleConEntry",
+//   },
+// ],
 // }).extends(UserSchema);
 
 module.exports = mongoose.model("User", UserSchema);
