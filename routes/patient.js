@@ -26,7 +26,6 @@ router.post("/add", authenticateToken, async (req, res) => {
         DOB: req.body.DOB,
         gender: req.body.gender,
         histo_diagnosis: req.body.histo_diagnosis,
-        consent_form: req.body.consent_form,
       });
 
       const patient = await newPatient.save();
