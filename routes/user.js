@@ -25,53 +25,6 @@ router.get("/hospitals/:id", async (req, res) => {
   }
 });
 
-router.post("/hospitals/update", async (req, res) => {
-  const body = req.body;
-  const data = req.body.data;
-  try {
-    const hospital = await Hospital.findById(data._id);
-    if (hospital) {
-      const updatename = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          name: body.name,
-        }
-      );
-      const updatecategory = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          category: body.category,
-        }
-      );
-      const updatecity = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          city: body.city,
-        }
-      );
-      const updateaddress = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          address: body.address,
-        }
-      );
-      const updatecontact_no = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          contact_no: body.number,
-        }
-      );
-
-      const hospital = await Hospital.findById(data._id);
-
-      res.status(200).json(hospital);
-    } else {
-      return res.status(401).json({ message: "Hospital Not Found" });
-    }
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
 
 router.post("/hospitals/delete", authenticateToken, async (req, res) => {
   try {
