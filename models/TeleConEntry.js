@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const TeleConEntrySchema = new mongoose.Schema(
   {
     patient_id: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref : "Patient",
       required: true,
     },
     assignees: [
