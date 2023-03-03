@@ -28,9 +28,9 @@ router.get("/hospitals/:id", async (req, res) => {
 router.post("/hospitals/update", async (req, res) => {
   const body = req.body;
   const data = req.body.data;
-  try{
+  try {
     const hospital = await Hospital.findById(data._id);
-    if(hospital){
+    if (hospital) {
       const updatename = await Hospital.findOneAndUpdate(
         { _id: data._id },
         {
@@ -62,29 +62,31 @@ router.post("/hospitals/update", async (req, res) => {
         }
       );
 
-      const hospital = await Hospital.findById(data._id)
+      const hospital = await Hospital.findById(data._id);
 
       res.status(200).json(hospital);
-    }else{
+    } else {
       return res.status(401).json({ message: "Hospital Not Found" });
     }
-  }catch(err){
+  } catch (err) {
     res.status(500).json(err);
   }
 });
 
 router.post("/hospitals/delete", authenticateToken, async (req, res) => {
-  try{
+  try {
     const hospital = Hospital.findById(req.id);
-    if(hospital){
+    if (hospital) {
       const result = await Hospital.deleteOne({
-        _id: req.id
+        _id: req.id,
       });
-      if (result==1){
-        return res.status(200).json({ message: "Succesfuly deleted the hospital" });
+      if (result == 1) {
+        return res
+          .status(200)
+          .json({ message: "Succesfuly deleted the hospital" });
       }
     }
-  }catch{
+  } catch {
     return res.status(401).json({ message: "Hospital Not Found" });
   }
 });
@@ -175,6 +177,7 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
         });
 
         const savedEntry = await newEntry.save();
+        requestedClinician.teleConEntry_id.push(savedEntry._id);
         const responseDoc = savedEntry._doc;
         responseDoc["message"] = "Successfully created!";
         res.status(200).json(responseDoc);
