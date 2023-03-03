@@ -165,7 +165,7 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
       });
       if (releventPatient) {
         const newEntry = new TeleConEntry({
-          patient_id: req.body.patient_id,
+          patient_id: releventPatient._id,
           startTime: req.body.start_time,
           endTime: req.body.end_time,
           complaint: req.body.complaint,
@@ -177,7 +177,10 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
         });
 
         const savedEntry = await newEntry.save();
+
         requestedClinician.teleConEntry_id.push(savedEntry._id);
+        requestedClinician.save();
+
         const responseDoc = savedEntry._doc;
         responseDoc["message"] = "Successfully created!";
         res.status(200).json(responseDoc);
