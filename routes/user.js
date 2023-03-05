@@ -125,8 +125,7 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
           findings: req.body.findings,
           currentHabits: req.body.currentHabits,
           reports: req.body.reports,
-          assignees: req.body.assignees,
-          reviews: req.body.reviews,
+          assignees: req.body.assignees
         });
 
         const savedEntry = await newEntry.save();
