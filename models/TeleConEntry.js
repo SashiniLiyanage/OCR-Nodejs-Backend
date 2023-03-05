@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const TeleConEntrySchema = new mongoose.Schema(
   {
     patient_id: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Patient",
+      type: mongoose.Schema.Types.ObjectId,
+      ref : "Patient",
       required: true,
     },
     assignees: [
@@ -23,11 +23,17 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    duration: {
-      type: mongoose.Schema.Types.Duration, // you can provide a duration value as a string in the format HH:mm:ss
-      required: true,
+    startTime: {
+      type: Date,
+      default: Date.now(),
+      // required: true,
     },
-    Findings: {
+    endTime: {
+      type: Date,
+      default: Date.now(),
+      // required: true,
+    },
+    findings: {
       type: String,
       default: "",
     },
