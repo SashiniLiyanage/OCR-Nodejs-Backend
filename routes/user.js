@@ -199,17 +199,12 @@ router.get("/entry/get/:patientID", authenticateToken, async (req, res) => {
       });
       // check whether the patient exists under the clinician
       if (releventPatient) {
-        const requestedEntry = await TeleConEntry.findOne({
-          patient_id: releventPatient._id,
+        const entries = await TeleConEntry.find({
+          patient_id: req.params.patientID,
         });
-        // check whether the entry exists
-        if (requestedEntry) {
-          const responseDoc = requestedEntry._doc;
-          responseDoc["message"] = "Entry retrieved successfully!";
-          res.status(200).json(responseDoc);
-        } else {
-          return res.status(404).json({ message: "Entry not found" });
-        }
+        const responseDoc = entries._doc;
+        responseDoc["message"] = "Entries retrieved successfully!";
+        res.status(200).json(responseDoc);
       } else {
         return res.status(404).json({ message: "Patient is not registered" });
       }
