@@ -160,10 +160,12 @@ router.get(
           patient_id: req.params.patientID,
           clinician_id: requestedClinician._id,
         });
+        // check whether the patient exists under the clinician
         if (releventPatient) {
           const requestedEntry = await TeleConEntry.findOne({
             patient_id: releventPatient._id,
           });
+          // check whether the entry exists
           if (requestedEntry) {
             const responseDoc = requestedEntry._doc;
             responseDoc["message"] = "Entry retrieved successfully!";
@@ -182,7 +184,5 @@ router.get(
     }
   }
 );
-
-
 
 module.exports = router;
