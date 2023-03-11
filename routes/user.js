@@ -25,7 +25,6 @@ router.get("/hospitals/:id", async (req, res) => {
   }
 });
 
-
 router.post("/hospitals/delete", authenticateToken, async (req, res) => {
   try {
     const hospital = Hospital.findById(req.id);
@@ -125,7 +124,7 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
           findings: req.body.findings,
           currentHabits: req.body.currentHabits,
           reports: req.body.reports,
-          assignees: req.body.assignees
+          assignees: req.body.assignees,
         });
 
         const savedEntry = await newEntry.save();
@@ -146,5 +145,44 @@ router.post("/entry/add", authenticateToken, async (req, res) => {
     res.status(500).json({ error: error, message: error.message });
   }
 });
+
+// get a teleconsultation entry
+router.get(
+  "/entry/get/:patientID/:entryID",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      // get the clinincian who requested the entry addition
+      const requestedClinician = await User.findOne({ email: req.email });
+
+      if (requestedClinician) {
+        const releventPatient = await Patient.findOne({
+          patient_id: req.params.patientID,
+          clinician_id: requestedClinician._id,
+        });
+        if (releventPatient) {
+          const requestedEntry = await TeleConEntry.findOne({
+            patient_id: releventPatient._id,
+          });
+          if (requestedEntry) {
+            const responseDoc = requestedEntry._doc;
+            responseDoc["message"] = "Entry retrieved successfully!";
+            res.status(200).json(responseDoc);
+          } else {
+            return res.status(404).json({ message: "Entry not found" });
+          }
+        } else {
+          return res.status(404).json({ message: "Patient is not registered" });
+        }
+      } else {
+        return res.status(404).json({ message: "Unauthorized Access" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error, message: error.message });
+    }
+  }
+);
+
+
 
 module.exports = router;
