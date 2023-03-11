@@ -100,8 +100,8 @@ let reportStorage = multer.diskStorage({
     cb(null, dest);
   },
   filename: (req, file, cb) => {
-    const date = new Date().toISOString().replace(/:/g, "-");
-    cb(null, date + "-" + file.originalname);
+    const date = new Date().toISOString().replace(/:/g, "_");
+    cb(null, date + "_" + file.originalname);
   },
 });
 
@@ -109,7 +109,6 @@ const uploadImages = multer({ storage: imageStorage }).array("files", 12);
 const updateImage = multer({ storage: imageStorage }).single("files");
 
 const uploadDocuments = multer({ storage: reportStorage }).array("files", 3);
-const updateDocument = multer({ storage: reportStorage }).single("files");
 
 // image routes
 app.post(
@@ -134,7 +133,7 @@ app.post(
           if (patient) {
             // upload images middleware
             // NOTE: below the image has not been implemented, assuming ONLY images will be sent through the request
-            upload(req, res, function (err) {
+            uploadImages(req, res, function (err) {
               if (err instanceof multer.MulterError) {
                 return res.status(500).json(err);
               } else if (err) {
@@ -159,7 +158,10 @@ app.post(
                   } else {
                     // as the image name, original image name is given for now until instructed otherwise
                     for (let i = 0; i < req.files.length; i++) {
-                      docs[i].image_name = req.files[i].originalname;
+                      docs[i].image_name =
+                        new Date().toISOString().replace(/:/g, "_") +
+                        "_" +
+                        req.files[i].originalname;
                       docs[i].save();
                     }
                     // ids of newly created images are pushed to the teleconsultation entry's image array
@@ -192,7 +194,7 @@ app.post(
 
 app.post("/api/images/update", authenticateToken, async (req, res) => {
   try {
-    update(req, res, function (err) {
+    updateImage(req, res, function (err) {
       if (err instanceof multer.MulterError) {
         console.log(err);
         return res.status(500).json(err);
@@ -244,7 +246,7 @@ app.post(
           if (patient) {
             // upload documents middleware
             // NOTE: assumes ONLY documents will be sent through the request
-            upload(req, res, function (err) {
+            uploadDocuments(req, res, function (err) {
               if (err instanceof multer.MulterError) {
                 return res.status(500).json(err);
               } else if (err) {
@@ -267,7 +269,10 @@ app.post(
                   } else {
                     // as the report name, original image name is given for now until instructed otherwise
                     for (let i = 0; i < req.files.length; i++) {
-                      docs[i].report_name = req.files[i].originalname;
+                      docs[i].report_name =
+                        new Date().toISOString().replace(/:/g, "_") +
+                        "_" +
+                        req.files[i].originalname;
                       docs[i].save();
                     }
                     // ids of newly created images are pushed to the teleconsultation entry's image array
