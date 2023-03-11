@@ -9,6 +9,7 @@ const fs = require("fs");
 const morgan = require("morgan");
 const multer = require("multer");
 const Image = require("./models/Image");
+const Report = require("./models/Report");
 const Patient = require("./models/Patient");
 const User = require("./models/User");
 const { authenticateToken } = require("./middleware/auth");
@@ -59,8 +60,12 @@ app.use(
   "/Storage/images",
   express.static(path.join(__dirname, "/Storage/images"))
 );
+app.use(
+  "/Storage/reports",
+  express.static(path.join(__dirname, "/Storage/reports"))
+);
 
-let storage = multer.diskStorage({
+let imageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     let dest = path.join(__dirname, "/Storage/images");
     let stat = null;
@@ -75,13 +80,38 @@ let storage = multer.diskStorage({
     cb(null, dest);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const date = new Date().toISOString().replace(/:/g, "-");
+    cb(null, date + "-" + file.originalname);
   },
 });
 
-const upload = multer({ storage: storage }).array("files", 12);
-const update = multer({ storage: storage }).single("files");
+let reportStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    let dest = path.join(__dirname, "/Storage/reports");
+    let stat = null;
+    try {
+      stat = fs.statSync(dest);
+    } catch (err) {
+      fs.mkdirSync(dest);
+    }
+    if (stat && !stat.isDirectory()) {
+      throw new Error("Directory cannot be created");
+    }
+    cb(null, dest);
+  },
+  filename: (req, file, cb) => {
+    const date = new Date().toISOString().replace(/:/g, "-");
+    cb(null, date + "-" + file.originalname);
+  },
+});
 
+const uploadImages = multer({ storage: imageStorage }).array("files", 12);
+const updateImage = multer({ storage: imageStorage }).single("files");
+
+const uploadDocuments = multer({ storage: reportStorage }).array("files", 3);
+const updateDocument = multer({ storage: reportStorage }).single("files");
+
+// image routes
 app.post(
   "/api/user/patient/images/:id",
   authenticateToken,
@@ -190,3 +220,80 @@ app.post("/api/images/update", authenticateToken, async (req, res) => {
     console.log(error);
   }
 });
+
+// document routes
+app.post(
+  "/api/user/patient/documents/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      // check for the existence of the entry
+      const teleConEntry = await TeleConEntry.findOne({ _id: req.params.id });
+      if (teleConEntry) {
+        // check for the existence of the clinician
+        const requestedClinician = await User.findOne({
+          email: req.email,
+          teleConEntry_id: { $in: [teleConEntry._id] },
+        });
+        if (requestedClinician) {
+          // check for the existence of the patient
+          const patient = await Patient.findOne({
+            clinician_id: requestedClinician._id,
+            _id: teleConEntry.patient_id,
+          });
+          if (patient) {
+            // upload documents middleware
+            // NOTE: assumes ONLY documents will be sent through the request
+            upload(req, res, function (err) {
+              if (err instanceof multer.MulterError) {
+                return res.status(500).json(err);
+              } else if (err) {
+                return res.status(500).json(err);
+              } else {
+                // extract form data from the request body
+                const { files, ...others } = req.body;
+                // add patient id as an Object id
+                others["patient_id"] = patient._id;
+
+                data = [];
+                for (let i = 0; i < req.files.length; i++) {
+                  data.push(others); // copies data for all the documents
+                }
+
+                // documents are created in bulk below
+                Report.insertMany(data, function (error, docs) {
+                  if (error) {
+                    return res.status(500).json(err.message);
+                  } else {
+                    // as the report name, original image name is given for now until instructed otherwise
+                    for (let i = 0; i < req.files.length; i++) {
+                      docs[i].report_name = req.files[i].originalname;
+                      docs[i].save();
+                    }
+                    // ids of newly created images are pushed to the teleconsultation entry's image array
+                    docs.forEach((doc) => {
+                      teleConEntry.reports.push(doc._id);
+                    });
+                    teleConEntry.save();
+                    return res
+                      .status(200)
+                      .json({ docs, message: "Reports Uploaded Successfully" });
+                  }
+                });
+              }
+            });
+          } else {
+            return res.status(404).json({ message: "No Patient found" });
+          }
+        } else {
+          return res.status(404).json({ message: "Unauthorized access" });
+        }
+      } else {
+        return res.status(404).json({ message: "No Entry found" });
+      }
+    } catch (error) {
+      res.status(500).json(error);
+      console.log(error);
+    }
+  }
+);
