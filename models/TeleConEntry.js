@@ -4,7 +4,7 @@ const TeleConEntrySchema = new mongoose.Schema(
   {
     patient_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref : "Patient",
+      ref: "Patient",
       required: true,
     },
     assignees: [
@@ -41,10 +41,12 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    reports: {
-      type: Array,
-      default: [],
-    },
+    reports: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Report",
+      },
+    ],
     reviews: [
       {
         type: mongoose.Schema.Types.ObjectId,

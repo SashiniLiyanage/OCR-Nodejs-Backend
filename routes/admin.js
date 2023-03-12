@@ -265,9 +265,9 @@ router.post("/hospital", authenticateToken, async (req, res) => {
 router.post("/hospitals/update", async (req, res) => {
   const body = req.body;
   const data = req.body.data;
-  try{
+  try {
     const hospital = await Hospital.findById(data._id);
-    if(hospital){
+    if (hospital) {
       const updatename = await Hospital.findOneAndUpdate(
         { _id: data._id },
         {
@@ -299,33 +299,35 @@ router.post("/hospitals/update", async (req, res) => {
         }
       );
 
-      const hospital = await Hospital.findById(data._id)
+      const hospital = await Hospital.findById(data._id);
 
       res.status(200).json(hospital);
-    }else{
+    } else {
       return res.status(401).json({ message: "Hospital Not Found" });
     }
-  }catch(err){
+  } catch (err) {
     res.status(500).json(err);
   }
 });
 
 router.post("/hospitals/delete/:id", async (req, res) => {
-  try{
+  try {
     const hospital = Hospital.findById(req.params.id);
-    if(hospital){
-      try{
+    if (hospital) {
+      try {
         await Hospital.deleteOne({
-          _id: req.params.id
+          _id: req.params.id,
         });
-        return res.status(200).json({ message: "Hospital deleted successfully" });
-      }catch(e){
+        return res
+          .status(200)
+          .json({ message: "Hospital deleted successfully" });
+      } catch (e) {
         return res.status(500).json({ message: "Hospital deletion failed" });
       }
-    }else{
+    } else {
       return res.status(404).json({ message: "Hospital not found" });
     }
-  }catch(err){
+  } catch (err) {
     return res.status(500).json(err);
   }
 });
