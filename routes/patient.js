@@ -49,11 +49,15 @@ router.post("/update/:id", async (req, res) => {
       const update = await Patient.findOneAndUpdate(
         { _id: req.params.id },
         {
+          patient_name: req.body.patient_name,
           gender: req.body.gender,
-          age: req.body.age,
+          DOB: req.body.DOB,
           risk_factors: req.body.risk_factors,
           histo_diagnosis: req.body.histo_diagnosis,
-          category: req.body.category,
+          contact_no: req.body.contact_no,
+          systemic_disease: req.body.systemic_disease,
+          family_history: req.body.family_history,
+          medical_history: req.body.medical_history
         }
       );
 

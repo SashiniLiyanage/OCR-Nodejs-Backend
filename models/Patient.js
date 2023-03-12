@@ -11,7 +11,7 @@ const PatientSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    name: {
+    patient_name: {
       type: String,
       required: true,
     },
@@ -30,6 +30,22 @@ const PatientSchema = new mongoose.Schema(
     histo_diagnosis: {
       type: String,
       default: "",
+    },
+    medical_history: {
+      type: Array,
+      default: [],
+    },
+    family_history: {
+      type: Array,
+      default: [],
+    },
+    systemic_disease: {
+      type: String,
+      default: "",
+    },
+    contact_no: {
+      type: String,
+      default: "+94",
     },
     consent_form: {
       type: String,

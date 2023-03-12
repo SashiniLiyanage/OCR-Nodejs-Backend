@@ -38,8 +38,8 @@ const TeleConEntrySchema = new mongoose.Schema(
       default: "",
     },
     currentHabits: {
-      type: String,
-      default: "",
+      type: Array,
+      default: [],
     },
     reports: [
       {
