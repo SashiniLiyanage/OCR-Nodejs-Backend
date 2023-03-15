@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 
+// only to add initial admin
 // admin sign up
 router.post("/signup", async (req, res) => {
   try {
@@ -22,7 +23,7 @@ router.post("/signup", async (req, res) => {
         email: req.body.email,
         password: hashedPassword,
         hospital: req.body.hospital,
-        role: [1, 2],
+        role: "System Admin",
       });
       const user = await newUser.save();
       const { password, ...others } = user._doc;

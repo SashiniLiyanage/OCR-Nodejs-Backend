@@ -2,7 +2,9 @@ const router = require("express").Router();
 const User = require("../models/User");
 const Request = require("../models/Request");
 const Hospital = require("../models/Hospital");
-const { authenticateToken } = require("../middleware/auth");
+const Role = require("../models/Role");
+const Option = require("../models/Option");
+const { authenticateToken, checkPermissions} = require("../middleware/auth");
 const emailService = require("../utils/emailService");
 const bcrypt = require("bcrypt");
 
@@ -10,10 +12,15 @@ require("dotenv").config();
 
 // get all requests
 router.get("/requests", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const requests = await Request.find(
       {},
-      { _id: true, username: true, reg_no: true }
+      { _id: true, username: true, reg_no: true, hospital: true}
     );
     return res.status(200).json(requests);
   } catch (err) {
@@ -21,7 +28,13 @@ router.get("/requests", authenticateToken, async (req, res) => {
   }
 });
 
+// get one request
 router.get("/requests/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const request = await Request.findById(req.params.id);
 
@@ -38,6 +51,11 @@ router.get("/requests/:id", authenticateToken, async (req, res) => {
 
 // delete requests
 router.post("/requests/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const request = await Request.findById(req.params.id);
 
@@ -70,6 +88,11 @@ router.post("/requests/:id", authenticateToken, async (req, res) => {
 
 // accept requests
 router.post("/accept/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const request = await Request.findById(req.params.id);
 
@@ -81,13 +104,11 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
 
       const user = await User.findOne({ email: request.email });
       if (user) {
-        return res
-          .status(401)
-          .json({ message: "Email address already in use" });
+        return res.status(401).json({ message: "Email address already in use" });
       }
 
       const newUser = new User({
-        username: req.body.username,
+        username: req.body.username? req.body.username: request.username,
         email: request.email,
         password: request.password,
         reg_no: request.reg_no,
@@ -95,7 +116,7 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
         hospital: request.hospital,
         designation: request.designation ? req.body.designation : "",
         contact_no: request.contact_no ? req.body.contact_no : "",
-        availability: request.availability,
+        availability: request.availability ? request.availability : true,
       });
 
       try {
@@ -111,7 +132,7 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
           })
           .catch((error) => {
             others["message"] =
-              "Error: Email notification Failed. User registration successful!";
+              "User registration successful! Error: Email notification Failed. ";
             return res.status(200).json(others);
           });
       } catch (error) {
@@ -125,14 +146,130 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// get all reviewers
-router.get("/reviewers", authenticateToken, async (req, res) => {
+// get users by the roles
+router.get("/users/role/:role", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
   try {
-    const reviewers = await User.find(
-      { role: { $in: [2] } },
-      { username: 1, _id: 1, reg_no: 1 }
-    );
-    return res.status(200).json(reviewers);
+    if(req.params.role === "All"){
+      const users = await User.find(
+        {},
+        { username: 1, _id: 1, reg_no: 1, hospital:1, role: 1 }
+      );
+      return res.status(200).json(users);
+    }else{
+      const users = await User.find(
+        { role: req.params.role },
+        { username: 1, _id: 1, reg_no: 1, hospital:1, role: 1 }
+      );
+      return res.status(200).json(users);
+    }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get all the roles
+router.get("/roles", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const users = await Role.find();
+      return res.status(200).json(users);
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get one the roles
+router.get("/roles/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const role = await Role.findById(req.params.id);
+      if(role){
+        return res.status(200).json(role);
+      }else{
+        return res.status(404).json({ message: "Role not found"});
+      }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// add a role
+router.post("/roles", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+
+    //case insensitive search
+    const role = await Role.findOne({role: {$regex: `^${req.body.role}$`, $options: "i"}});
+    
+    if(!role){
+
+      const newRole = new Role({
+        role: req.body.role,
+        permissions: req.body.permissions
+      });
+  
+      try {
+        const addrole = await newRole.save();
+        return res.status(200).json({ message: "New role added successfully"});
+      }catch(err){
+        return res.status(500).json({ message: "New role insertion failed" });
+      }
+
+
+    }else{
+        return res.status(401).json({message:"Role already exists"});
+    }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+router.post("/roles/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+
+    //case insensitive search
+    const role = await Role.findById(req.params.id);
+    
+    if(role){
+      try {
+        const update = await Role.findOneAndUpdate(
+          { _id: req.params.id },
+          {
+            role: req.body.role,
+            permissions: req.body.permissions,
+          }
+        );
+        return res.status(200).json({ message: "Role updated successfully"});
+      }catch(err){
+        return res.status(500).json({ message: "Role updation failed" });
+      }
+
+
+    }else{
+        return res.status(404).json({message:"Role not found"});
+    }
   } catch (err) {
     return res.status(500).json(err);
   }
@@ -140,6 +277,11 @@ router.get("/reviewers", authenticateToken, async (req, res) => {
 
 // get a specific user
 router.get("/users/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const user = await User.findById(req.params.id);
 
@@ -156,6 +298,11 @@ router.get("/users/:id", authenticateToken, async (req, res) => {
 
 // update users
 router.post("/update/user/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     let user = await User.findById(req.params.id);
 
@@ -187,6 +334,11 @@ router.post("/update/user/:id", authenticateToken, async (req, res) => {
 
 // delete a user
 router.post("/delete/user/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     let user = await User.findById(req.params.id);
     if (user) {
@@ -206,6 +358,11 @@ router.post("/delete/user/:id", authenticateToken, async (req, res) => {
 
 // reset user password
 router.post("/reset/user/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     let user = await User.findById(req.params.id);
     if (user) {
@@ -220,9 +377,7 @@ router.post("/reset/user/:id", authenticateToken, async (req, res) => {
           }
         );
 
-        return res
-          .status(200)
-          .json({ message: "User password reseted successfully" });
+        return res.status(200).json({ message: "User password reseted successfully" });
       } catch (error) {
         return res.status(500).json({ message: "User deletion failed" });
       }
@@ -236,6 +391,11 @@ router.post("/reset/user/:id", authenticateToken, async (req, res) => {
 
 // add hospitals
 router.post("/hospital", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     let hospital = await Hospital.findOne({ name: req.body.name });
 
@@ -243,16 +403,17 @@ router.post("/hospital", authenticateToken, async (req, res) => {
       try {
         const newHospital = new Hospital({
           name: req.body.name,
-          details: req.body.details,
+          category: req.body.category,
+          city: req.body.city,
+          address: req.body.address,
+          contact_no: req.body.contact_no
         });
 
         const addHospital = await newHospital.save();
 
-        return res
-          .status(200)
-          .json({ message: "Hospital is added successfully!" });
+        return res.status(200).json({ message: "Hospital is added successfully!" });
       } catch (error) {
-        return res.status(500).json({ message: "User details update failed" });
+        return res.status(500).json({ message: "Hospital details update failed" });
       }
     } else {
       return res.status(401).json({ message: "Hospital is already added" });
@@ -262,46 +423,28 @@ router.post("/hospital", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/hospitals/update", async (req, res) => {
-  const body = req.body;
-  const data = req.body.data;
+router.post("/hospitals/update/:id", authenticateToken, async (req, res) => {
+
   try {
-    const hospital = await Hospital.findById(data._id);
+    const hospital = await Hospital.findById({_id: req.params.id});
     if (hospital) {
-      const updatename = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          name: body.name,
-        }
-      );
-      const updatecategory = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          category: body.category,
-        }
-      );
-      const updatecity = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          city: body.city,
-        }
-      );
-      const updateaddress = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          address: body.address,
-        }
-      );
-      const updatecontact_no = await Hospital.findOneAndUpdate(
-        { _id: data._id },
-        {
-          contact_no: body.number,
-        }
-      );
+      try {
+        const update = await User.findOneAndUpdate(
+          {_id: req.params.id},
+          {
+            name: req.body.name,
+            category: req.body.category,
+            city: req.body.city,
+            address: req.body.address? req.body.address: "",
+            contact_no: req.body.contact_no ? req.body.contact_no:""
+          }
+        );
 
-      const hospital = await Hospital.findById(data._id);
+        return res.status(200).json({ message: "Hospital details updated successfully!" });
+      } catch (error) {
+        return res.status(500).json({ message: "Hospital details update failed" });
+      }
 
-      res.status(200).json(hospital);
     } else {
       return res.status(401).json({ message: "Hospital Not Found" });
     }
@@ -310,17 +453,18 @@ router.post("/hospitals/update", async (req, res) => {
   }
 });
 
-router.post("/hospitals/delete/:id", async (req, res) => {
+router.post("/hospitals/delete/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const hospital = Hospital.findById(req.params.id);
     if (hospital) {
       try {
-        await Hospital.deleteOne({
-          _id: req.params.id,
-        });
-        return res
-          .status(200)
-          .json({ message: "Hospital deleted successfully" });
+        await Hospital.deleteOne({_id: req.params.id});
+        return res.status(200).json({ message: "Hospital deleted successfully" });
       } catch (e) {
         return res.status(500).json({ message: "Hospital deletion failed" });
       }
@@ -329,6 +473,68 @@ router.post("/hospitals/delete/:id", async (req, res) => {
     }
   } catch (err) {
     return res.status(500).json(err);
+  }
+});
+
+
+// get hospital details
+router.get("/hospitals/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const hospital = await Hospital.findById(req.params.id);
+      if(!hospital){
+        return res.status(404).json({ message: `Hospital not found`});
+      }else{
+        return res.status(200).json(hospital);
+      }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get all the roles
+router.get("/option/:name", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const options = await Option.findOne({name: {$regex: `^${req.params.name}$`, $options: "i"}});
+      if(!options){
+        return res.status(404).json({ message: `${req.params.name} not found`});
+      }else{
+        return res.status(200).json(options);
+      }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// only to add options by tech team
+router.post("/option", async (req, res) => {
+  try {
+    const option = await Option.findOne({name: {$regex: `^${req.body.name}$`, $options: "i"}});
+    
+    if (option) {
+      return res.status(401).json({ message: "Option already exists" });
+
+    } else {
+     
+      const newOption = new Option({
+        name: req.body.name,
+        options: req.body.options,
+      });
+      const saveOption = await newOption.save();
+      res.status(200).json({message:"Option is saved"});
+      
+    }
+  } catch (error) {
+    res.status(500).json(error);
   }
 });
 

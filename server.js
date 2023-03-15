@@ -13,6 +13,7 @@ const Report = require("./models/Report");
 const Patient = require("./models/Patient");
 const User = require("./models/User");
 const { authenticateToken } = require("./middleware/auth");
+const mongoose = require("mongoose");
 
 //const PORT = process.env.PORT || 8000;
 const PORT = 5000;
@@ -302,3 +303,26 @@ app.post(
     }
   }
 );
+
+
+// // get a teleconsultation entry
+// app.get("/temp/:id", async (req, res) => {
+//   try {
+//     const data = await TeleConEntry.aggregate([
+//       {
+//         $lookup: {
+//           from: 'patients',
+//           localField: 'patient_id',
+//           foreignField: '_id',
+//           as: 'patient',
+//         },
+//       },
+//     ])
+
+    
+//     return res.status(200).json(data);
+//   } catch (error) {
+//     res.status(500).json({ error: error, message: error.message });
+//   }
+// }
+// );

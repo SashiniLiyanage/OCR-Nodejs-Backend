@@ -2,13 +2,9 @@ const mongoose = require("mongoose");
 
 const ReportSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
-      required: true,
-    },
-    patient_id: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Patient",
+    telecon_entry_id: {
+      type: mongoose.Types.ObjectId,
+      ref: "TeleConEntry",
       required: true,
     },
     report_name: {
@@ -22,4 +18,4 @@ const ReportSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Report", ReportSchema);
+module.exports = mongoose.model("Report", ReportSchema, "reports");

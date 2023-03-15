@@ -2,15 +2,19 @@ const express = require("express");
 const router = express.Router();
 const Patient = require("../models/Patient");
 const User = require("../models/User");
-const { authenticateToken } = require("../middleware/auth");
+const { authenticateToken, checkPermissions } = require("../middleware/auth");
 
 // add new patient
 router.post("/add", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 300)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
-    const requestedClinician = await User.findOne({ email: req.email });
     const patient = await Patient.findOne({
       patient_id: req.body.patient_id,
-      clinician_id: requestedClinician._id,
+      clinician_id: req._id,
     });
 
     if (patient) {
@@ -20,12 +24,17 @@ router.post("/add", authenticateToken, async (req, res) => {
     } else {
       const newPatient = new Patient({
         patient_id: req.body.patient_id,
-        clinician_id: requestedClinician._id,
-        name: req.body.name,
+        clinician_id: req._id,
+        patient_name: req.body.patient_name,
         risk_factors: req.body.risk_factors,
         DOB: req.body.DOB,
         gender: req.body.gender,
         histo_diagnosis: req.body.histo_diagnosis,
+        medical_history: req.body.medical_history,
+        family_history: req.body.family_history,
+        systemic_disease: req.body.systemic_disease,
+        contact_no: req.body.contact_no
+
       });
 
       const patient = await newPatient.save();
@@ -40,14 +49,22 @@ router.post("/add", authenticateToken, async (req, res) => {
 
 //update patient details
 router.post("/update/:id", async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 300)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findOne({
+      _id: req.params.id,
+      clinician_id: req._id
+    });
 
     if (!patient) {
       return res.status(401).json({ messsage: "Patient ID doesnt exists!" });
     } else {
       const update = await Patient.findOneAndUpdate(
-        { _id: req.params.id },
+        { _id: req.params.id, clinician_id: req._id},
         {
           patient_name: req.body.patient_name,
           gender: req.body.gender,
@@ -96,9 +113,14 @@ router.get("/search", async (req, res) => {
 
 // get all patients
 router.get("/all", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 300)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
   try {
     const patients = await Patient.find(
-      {},
+      {clinician_id: req._id},
       { _id: 1, gender: 1, category: 1, patient_id: 1, age: 1 }
     );
 
@@ -108,14 +130,22 @@ router.get("/all", authenticateToken, async (req, res) => {
   }
 });
 
+// get one patient
 router.get("/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 300)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findOne({
+      _id: req.params.id,
+      clinician_id: req._id
+    });
 
     if (patient) {
       return res.status(200).json(patient);
     } else {
-      return res.status(404).json({ message: "Patient ID not found" });
+      return res.status(404).json({ message: "Patient not found" });
     }
   } catch (err) {
     return res.status(500).json(err);

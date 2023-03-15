@@ -2,13 +2,9 @@ const mongoose = require("mongoose");
 
 const ImageSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
-      required: true,
-    },
-    patient_id: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Patient",
+    telecon_entry_id: {
+      type: mongoose.Types.ObjectId,
+      ref: "TeleConEntry",
       required: true,
     },
     image_name: {
@@ -42,4 +38,4 @@ const ImageSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Image", ImageSchema);
+module.exports = mongoose.model("Image", ImageSchema, "images");
