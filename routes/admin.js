@@ -2,6 +2,8 @@ const router = require("express").Router();
 const User = require("../models/User");
 const Request = require("../models/Request");
 const Hospital = require("../models/Hospital");
+const Role = require("../models/Role");
+const Option = require("../models/Option");
 const { authenticateToken, checkPermissions} = require("../middleware/auth");
 const emailService = require("../utils/emailService");
 const bcrypt = require("bcrypt");
@@ -18,7 +20,7 @@ router.get("/requests", authenticateToken, async (req, res) => {
   try {
     const requests = await Request.find(
       {},
-      { _id: true, username: true, reg_no: true }
+      { _id: true, username: true, reg_no: true, hospital: true}
     );
     return res.status(200).json(requests);
   } catch (err) {
@@ -164,6 +166,109 @@ router.get("/users/role/:role", authenticateToken, async (req, res) => {
         { username: 1, _id: 1, reg_no: 1, hospital:1, role: 1 }
       );
       return res.status(200).json(users);
+    }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get all the roles
+router.get("/roles", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const users = await Role.find();
+      return res.status(200).json(users);
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get one the roles
+router.get("/roles/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const role = await Role.findById(req.params.id);
+      if(role){
+        return res.status(200).json(role);
+      }else{
+        return res.status(404).json({ message: "Role not found"});
+      }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// add a role
+router.post("/roles", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+
+    //case insensitive search
+    const role = await Role.findOne({role: {$regex: `^${req.body.role}$`, $options: "i"}});
+    
+    if(!role){
+
+      const newRole = new Role({
+        role: req.body.role,
+        permissions: req.body.permissions
+      });
+  
+      try {
+        const addrole = await newRole.save();
+        return res.status(200).json({ message: "New role added successfully"});
+      }catch(err){
+        return res.status(500).json({ message: "New role insertion failed" });
+      }
+
+
+    }else{
+        return res.status(401).json({message:"Role already exists"});
+    }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+router.post("/roles/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+
+    //case insensitive search
+    const role = await Role.findById(req.params.id);
+    
+    if(role){
+      try {
+        const update = await Role.findOneAndUpdate(
+          { _id: req.params.id },
+          {
+            role: req.body.role,
+            permissions: req.body.permissions,
+          }
+        );
+        return res.status(200).json({ message: "Role updated successfully"});
+      }catch(err){
+        return res.status(500).json({ message: "Role updation failed" });
+      }
+
+
+    }else{
+        return res.status(404).json({message:"Role not found"});
     }
   } catch (err) {
     return res.status(500).json(err);
@@ -318,7 +423,7 @@ router.post("/hospital", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/hospitals/update/:id", async (req, res) => {
+router.post("/hospitals/update/:id", authenticateToken, async (req, res) => {
 
   try {
     const hospital = await Hospital.findById({_id: req.params.id});
@@ -348,7 +453,7 @@ router.post("/hospitals/update/:id", async (req, res) => {
   }
 });
 
-router.post("/hospitals/delete/:id", async (req, res) => {
+router.post("/hospitals/delete/:id", authenticateToken, async (req, res) => {
 
   if(!checkPermissions(req.permissions, 100)){
     return res.status(401).json({ message: "Unauthorized access"});
@@ -368,6 +473,68 @@ router.post("/hospitals/delete/:id", async (req, res) => {
     }
   } catch (err) {
     return res.status(500).json(err);
+  }
+});
+
+
+// get hospital details
+router.get("/hospitals/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const hospital = await Hospital.findById(req.params.id);
+      if(!hospital){
+        return res.status(404).json({ message: `Hospital not found`});
+      }else{
+        return res.status(200).json(hospital);
+      }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get all the roles
+router.get("/option/:name", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 100)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+  
+  try {
+      const options = await Option.findOne({name: {$regex: `^${req.params.name}$`, $options: "i"}});
+      if(!options){
+        return res.status(404).json({ message: `${req.params.name} not found`});
+      }else{
+        return res.status(200).json(options);
+      }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// only to add options by tech team
+router.post("/option", async (req, res) => {
+  try {
+    const option = await Option.findOne({name: {$regex: `^${req.body.name}$`, $options: "i"}});
+    
+    if (option) {
+      return res.status(401).json({ message: "Option already exists" });
+
+    } else {
+     
+      const newOption = new Option({
+        name: req.body.name,
+        options: req.body.options,
+      });
+      const saveOption = await newOption.save();
+      res.status(200).json({message:"Option is saved"});
+      
+    }
+  } catch (error) {
+    res.status(500).json(error);
   }
 });
 
