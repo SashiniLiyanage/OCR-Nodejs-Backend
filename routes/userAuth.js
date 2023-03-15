@@ -2,6 +2,8 @@ const router = require("express").Router();
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Request = require("../models/Request");
+const Role = require("../models/Role");
+
 const bcrypt = require("bcrypt");
 const {
   generateRefreshToken,
@@ -21,25 +23,21 @@ router.post("/signup", async (req, res) => {
     const email = await User.findOne({ email: req.body.email });
 
     if (userregno) {
-      return res
-        .status(401)
-        .json({ message: "The Reg No is already registered" });
+      return res.status(401).json({ message: "The Reg No is already registered" });
     }
 
     if (email) {
-      return res
-        .status(401)
-        .json({ message: "Email address is already registered" });
+      return res.status(401).json({ message: "Email address is already registered" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
     if (reqreg || reqemail) {
-      return res
-        .status(200)
-        .json({ message: "A request for registration already exists." });
+      
+      return res.status(200).json({ message: "A request for registration already exists." });
+
     } else {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
       const newUserRequest = new Request({
         reg_no: req.body.reg_no,
         username: req.body.username,
@@ -47,13 +45,12 @@ router.post("/signup", async (req, res) => {
         password: hashedPassword,
         hospital: req.body.hospital,
         designation: req.body.designation ? req.body.designation : "",
-        contact_no: req.body.contact_no ? req.body.contact_no : "",
-        availability: req.body.availability,
+        contact_no: req.body.contact_no ? req.body.contact_no : ""
       });
+
       const userRequest = await newUserRequest.save();
       const { password, ...others } = userRequest._doc;
-      others["message"] =
-        "Request is sent successfully. You will receive an Email on acceptance";
+      others["message"] = "Request is sent successfully. You will receive an Email on acceptance";
       return res.status(200).json(others);
     }
   } catch (error) {
@@ -61,14 +58,14 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// sign in
+// login
 router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: "Wrong credentials!" });
+
     const validate = await bcrypt.compare(req.body.password, user.password);
-    if (!validate)
-      return res.status(400).json({ message: "Wrong credentials!" });
+    if (!validate) return res.status(400).json({ message: "Wrong credentials!" });
 
     const accessToken = jwt.sign(
       { sub: user.email, role: user.role },
@@ -80,27 +77,26 @@ router.post("/login", async (req, res) => {
 
     setTokenCookie(res, refreshToken.token);
 
+    const rolePermissions = await Role.findOne({ role: user.role});
+
     // send the user data and refresh, access tokens
     const { password, ...others } = user._doc;
-    // others["access_token"] = accessToken;
     others["message"] = "Successfuly logged in";
+    others["permissions"] = rolePermissions.permissions;
+
     res.status(200).json({
       accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME },
       ref: user,
       others,
     });
   } catch (error) {
-    // console.log(error)
     res.status(500).json(error);
   }
 });
 
 router.post("/refreshToken", async (req, res) => {
   const token = req.cookies.refreshToken;
-  if (!token)
-    return res
-      .status(400)
-      .json({ success: false, message: "Token is required" });
+  if (!token) return res.status(400).json({ success: false, message: "Token is required" });
 
   const ipAddress = req.ip;
 
@@ -125,9 +121,7 @@ router.post("/revokeToken", authenticateToken, async (req, res) => {
   const ipAddress = req.ip;
 
   if (!token)
-    return res
-      .status(400)
-      .json({ success: false, message: "Token is required" });
+    return res.status(400).json({ success: false, message: "Token is required" });
 
   if (!req.ownsToken(token))
     return res.status(403).json({

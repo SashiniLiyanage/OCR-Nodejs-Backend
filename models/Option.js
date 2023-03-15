@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 
 const OptionSchema = new mongoose.Schema(
   {
-    option_name: {
+    name: {
       type: String,
       required: true,
     },
-    option_choices: {
+    options: {
       type: Array,
       default: [],
     },
@@ -17,4 +17,4 @@ const OptionSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Option", OptionSchema);
+module.exports = mongoose.model("Option", OptionSchema,"options");

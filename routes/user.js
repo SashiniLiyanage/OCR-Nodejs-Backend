@@ -7,39 +7,13 @@ const { authenticateToken } = require("../middleware/auth");
 
 require("dotenv").config();
 
+// get hospital list on signup page
 router.get("/hospitals", async (req, res) => {
   try {
     const hospital = await Hospital.find();
     return res.status(200).json(hospital);
   } catch (err) {
     return res.status(500).json(err);
-  }
-});
-
-router.get("/hospitals/:id", async (req, res) => {
-  try {
-    const hospital = await Hospital.findById(req.params.id);
-    return res.status(200).json(hospital);
-  } catch (err) {
-    return res.status(500).json(err);
-  }
-});
-
-router.post("/hospitals/delete", authenticateToken, async (req, res) => {
-  try {
-    const hospital = Hospital.findById(req.id);
-    if (hospital) {
-      const result = await Hospital.deleteOne({
-        _id: req.id,
-      });
-      if (result == 1) {
-        return res
-          .status(200)
-          .json({ message: "Succesfuly deleted the hospital" });
-      }
-    }
-  } catch {
-    return res.status(401).json({ message: "Hospital Not Found" });
   }
 });
 

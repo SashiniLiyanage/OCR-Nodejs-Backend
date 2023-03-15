@@ -7,18 +7,11 @@ const TeleConEntrySchema = new mongoose.Schema(
       ref: "Patient",
       required: true,
     },
-    assignees: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Reviewer",
-      },
-    ],
-    images: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Image",
-      },
-    ],
+    clinician_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     complaint: {
       type: String,
       default: "",
@@ -26,12 +19,10 @@ const TeleConEntrySchema = new mongoose.Schema(
     startTime: {
       type: Date,
       default: Date.now(),
-      // required: true,
     },
     endTime: {
       type: Date,
       default: Date.now(),
-      // required: true,
     },
     findings: {
       type: String,
@@ -41,18 +32,10 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
-    reports: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Report",
-      },
-    ],
-    reviews: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Review",
-      },
-    ],
+    updated:{
+      type: Boolean,
+      default:false
+    }
   },
   {
     versionKey: false,
@@ -60,4 +43,4 @@ const TeleConEntrySchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("TeleConEntry", TeleConEntrySchema);
+module.exports = mongoose.model("TeleConEntry", TeleConEntrySchema, "teleconentries");

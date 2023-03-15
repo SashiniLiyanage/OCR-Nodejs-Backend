@@ -5,6 +5,14 @@ const Patient = require('../models/Patient');
 const User = require('../models/User');
 const {authenticateToken} = require('../middleware/auth')
 
+/*
+ * 
+ * 
+ * need to modify
+ * 
+ * 
+ */
+
 router.get('/all', authenticateToken, async(req, res)=>{
     try{
     

@@ -31,11 +31,7 @@ const RequestSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-    },
-    availability: {
-      type: Boolean,
-      default: true,
-    },
+    }
   },
   {
     versionKey: false,
@@ -43,4 +39,4 @@ const RequestSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Request", RequestSchema);
+module.exports = mongoose.model("Request", RequestSchema, "requests");

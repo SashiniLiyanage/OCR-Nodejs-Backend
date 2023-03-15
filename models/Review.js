@@ -3,9 +3,14 @@ const mongoose = require("mongoose");
 
 const ReviewSchema = new mongoose.Schema(
   {
-    teleConEntry_Id: {
+    telecon_entry_id: {
       type: mongoose.Types.ObjectId,
       ref: "TeleConEntry",
+      required: true,
+    },
+    reviewer_id: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     provisional_diagnosis: {
@@ -35,4 +40,4 @@ const ReviewSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Review", ReviewSchema);
+module.exports = mongoose.model("Review", ReviewSchema, "reviews");

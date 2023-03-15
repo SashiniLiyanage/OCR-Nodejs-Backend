@@ -3,7 +3,17 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const randomToken = require('rand-token');
 const RefreshToken = require('../models/RefreshToken');
+const Role = require("../models/Role");
+
 require('dotenv').config()
+
+const checkPermissions = (permissionList, permission) =>{
+    if(permissionList.includes(permission)){
+        return true;
+    }else{
+        return false;
+    }
+}
 
 const setTokenCookie = (res, token) => {
     const cookieOptions = {
@@ -92,10 +102,14 @@ const authenticateToken = async(req, res , next) =>{
             return  res.status(401).json({message: "Unauthorized access"})
         }
 
+        const role = await Role.findOne({role: user.role});
 
         req.email = decodeRes.sub
         req.role = decodeRes.role
-        const refreshTokens = await RefreshToken.find({ user: user._id})
+        req._id = user._id
+        req.permissions = role.permissions
+        const refreshTokens = await RefreshToken.find({ user: user._id});
+        
         req.ownsToken = token => !!refreshTokens.find(x => x.token === token);
         
         next();
@@ -112,4 +126,6 @@ module.exports = {generateRefreshToken,
     refreshToken,
     revokeToken,
     setTokenCookie,
-    authenticateToken};
+    authenticateToken,
+    checkPermissions
+};
