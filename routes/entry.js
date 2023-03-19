@@ -4,6 +4,8 @@ const Patient = require("../models/Patient");
 const TeleConEntry = require("../models/TeleConEntry");
 const User = require("../models/User");
 const Role = require("../models/Role");
+const Assignment = require("../models/Assignment");
+
 const { authenticateToken, checkPermissions } = require("../middleware/auth");
 
 // add a teleconsultation entry
@@ -25,8 +27,7 @@ router.post("/add/:id", authenticateToken, async (req, res) => {
             end_time: req.body.end_time,
             complaint: req.body.complaint,
             findings: req.body.findings,
-            current_habits: req.body.current_habits,
-            reviewers: req.body.reviewers
+            current_habits: req.body.current_habits
           });
   
           const savedEntry = await newEntry.save();
@@ -91,7 +92,7 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
             {clinician_id: req._id, _id:req.params.id},
             {}
         )
-        .populate('reviewers')
+        .populate('reviewers', "username _id reg_no")
         .populate('patient', "patient_name patient_id _id")
         .populate('images')
         .populate('reports')
@@ -106,6 +107,44 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
     } catch (err) {
         console.log(err)
         return res.status(500).json({ message: err });
+    }
+});
+
+// add a reviewers
+router.post("/reviewer/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, 300)){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+      const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id });
+  
+      if (entry) {
+
+        await Assignment.deleteMany({telecon_entry_id : req.params.id});
+
+        const newAssignee = req.body.reviewers?.map(id => ({ reviewer_id: id, telecon_entry_id: req.params.id }));
+
+        await Assignment.insertMany(newAssignee);
+
+        await TeleConEntry.findByIdAndUpdate(req.params.id,
+            {reviewers: []}
+        )
+
+        req.body.reviewers?.forEach((id) => {
+            entry.reviewers.push(id);
+        });
+        entry.save();
+    
+        return res.status(200).json({ message: "Reveiwers Added successfully" });
+
+        } else {
+          return res.status(404).json({ message: "Entry is not found" });
+        }
+
+    } catch (error) {
+      res.status(500).json({ error: error, message: error.message });
     }
 });
 
