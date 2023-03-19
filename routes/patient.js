@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Patient = require("../models/Patient");
 const User = require("../models/User");
+const Role = require("../models/Role");
 const { authenticateToken, checkPermissions } = require("../middleware/auth");
 
 // add new patient
@@ -19,8 +20,8 @@ router.post("/add", authenticateToken, async (req, res) => {
 
     if (patient) {
       const others = patient._doc;
-      others["message"] = "Patient already exists";
-      return res.status(200).json(others);
+      others["message"] = "Patient ID already exists";
+      return res.status(401).json(others);
     } else {
       const newPatient = new Patient({
         patient_id: req.body.patient_id,
@@ -34,7 +35,6 @@ router.post("/add", authenticateToken, async (req, res) => {
         family_history: req.body.family_history,
         systemic_disease: req.body.systemic_disease,
         contact_no: req.body.contact_no
-
       });
 
       const patient = await newPatient.save();
@@ -48,7 +48,7 @@ router.post("/add", authenticateToken, async (req, res) => {
 });
 
 //update patient details
-router.post("/update/:id", async (req, res) => {
+router.post("/update/:id", authenticateToken ,async (req, res) => {
 
   if(!checkPermissions(req.permissions, 300)){
     return res.status(401).json({ message: "Unauthorized access"});
@@ -112,19 +112,83 @@ router.get("/search", async (req, res) => {
 });
 
 // get all patients
-router.get("/all", authenticateToken, async (req, res) => {
+router.get("/get", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 300)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
+  const pageSize = 20;
+  const page = req.query.page? req.query.page: 1;
+  const search = req.query.search? req.query.search: "";
+  const sort = req.query.sort === 'false'? -1: 1;
+
+  var filter = {};
+  
+  if(req.query.filter && req.query.filter === "ID"){
+    filter = {patient_id: sort}
+  }else if(req.query.filter && req.query.filter === "Name"){
+    filter = {patient_name: sort}
+  }else if(req.query.filter && req.query.filter === "Age"){
+    filter = {DOB: sort}
+  }else if(req.query.filter && req.query.filter === "Gender"){
+    filter = {gender: sort}
+  }else if(req.query.filter && req.query.filter === "Created Date"){
+    filter = {createdAt: sort}
+  }else if(req.query.filter && req.query.filter === "Updated Date"){
+    filter = {UpdatedAt: sort}
+  }else{
+    filter = {patient_id: sort}
+  }
+
+  try {
+    if(search !==""){
+      const patients = await Patient.find(
+        {clinician_id: req._id, 
+          $or: [
+            { patient_id: { $regex: search, $options: 'i' } },
+            { patient_name: { $regex: search, $options: 'i' } },
+            { gender: { $regex: search, $options: 'i' } }
+          ]
+        },
+        { _id: 1, gender: 1, patient_name: 1, patient_id: 1, DOB: 1 }
+      ).sort(filter).skip((page-1)*pageSize).limit(pageSize);
+  
+      return res.status(200).json({ patients: patients });
+
+    }else{
+      const patients = await Patient.find(
+        {clinician_id: req._id},
+        { _id: 1, gender: 1, patient_name: 1, patient_id: 1, DOB: 1 }
+      ).sort(filter).skip((page-1)*pageSize).limit(pageSize);
+  
+      return res.status(200).json({ patients: patients });
+    }
+    
+  } catch (err) {
+    return res.status(500).json({ message: err });
+  }
+});
+
+// check a patients
+router.post("/check", authenticateToken, async (req, res) => {
 
   if(!checkPermissions(req.permissions, 300)){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
   try {
-    const patients = await Patient.find(
-      {clinician_id: req._id},
-      { _id: 1, gender: 1, category: 1, patient_id: 1, age: 1 }
+    const patients = await Patient.findOne(
+      {clinician_id: req._id, patient_id:req.body.patient_id},
+      { _id: 1}
     );
 
-    return res.status(200).json({ patients: patients });
+    if(patients){
+      return res.status(200).json({ exists: true});
+    }else{
+      return res.status(200).json({ exists: false});
+    }
+
   } catch (err) {
     return res.status(500).json({ message: err });
   }
@@ -146,6 +210,34 @@ router.get("/:id", authenticateToken, async (req, res) => {
       return res.status(200).json(patient);
     } else {
       return res.status(404).json({ message: "Patient not found" });
+    }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+// get available reviewers
+router.get("/reviewer/all", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 300)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
+  try {
+
+    const roles = await Role.find({ "permissions": { $in: [200] } },
+    { role: 1})
+
+    const roleArray = []
+    roles.forEach(element => {
+      roleArray.push(element.role)
+    });
+    const reviwers = await User.find({ "role": { $in: roleArray } },{username:1,reg_no:1});
+
+    if (reviwers) {
+      return res.status(200).json(reviwers);
+    } else {
+      return res.status(404).json({ message: "Reviwers not found" });
     }
   } catch (err) {
     return res.status(500).json(err);
