@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const TeleConEntrySchema = new mongoose.Schema(
   {
-    patient_id: {
+    patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
       required: true,
@@ -16,11 +16,11 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    startTime: {
+    start_time: {
       type: Date,
       default: Date.now(),
     },
-    endTime: {
+    end_time: {
       type: Date,
       default: Date.now(),
     },
@@ -28,14 +28,18 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    currentHabits: {
+    current_habits: {
       type: Array,
       default: [],
     },
     updated:{
       type: Boolean,
       default:false
-    }
+    },
+    reviewers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
+    images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
+    reports: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Report' }]
   },
   {
     versionKey: false,
