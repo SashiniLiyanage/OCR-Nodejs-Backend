@@ -10,6 +10,14 @@ const AssignentSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: "TeleConEntry",
         required: true,
+    },
+    checked:{
+        type: Boolean,
+        default:false
+    },
+    reveiwed:{
+        type: Boolean,
+        default:false
     }
 },
 {

@@ -47,8 +47,29 @@ filename: (req, file, cb) => {
 },
 });
 
+let consentFormStorage = multer.diskStorage({
+destination: function (req, file, cb) {
+    let dest = path.join(__dirname, "../Storage/consentform");
+    let stat = null;
+    try {
+    stat = fs.statSync(dest);
+    } catch (err) {
+    fs.mkdirSync(dest);
+    }
+    if (stat && !stat.isDirectory()) {
+    throw new Error("Directory cannot be created");
+    }
+    cb(null, dest);
+},
+filename: (req, file, cb) => {
+    cb(null, file.originalname);
+},
+});
+
+
 const uploadImages = multer({ storage: imageStorage }).array("files", 12);
 const uploadDocuments = multer({ storage: reportStorage }).array("files", 3);
+const uploadConsentForm = multer({ storage: consentFormStorage }).single("files");
 
 // image routes
 router.post("/images/:id", authenticateToken, async (req, res) => {
@@ -135,6 +156,49 @@ router.post("/reports/:id", authenticateToken, async (req, res) => {
     } else {
         return res.status(404).json({ message: "No Entry found" });
     }
+    } catch (error) {
+    res.status(500).json(error);
+    console.log(error);
+    }
+}
+);
+
+// add new user
+router.post("/patient", authenticateToken, async (req, res) => {
+    if(!checkPermissions(req.permissions, 300)){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+    
+    try {
+    // check for the existence of the entry
+    const patient = await Patient.findOne({
+        patient_id: req.body.patient_id,
+        clinician_id: req._id,
+    });
+  
+    if (patient) {
+        return res.status(401).json({message:"Patient ID already exists"});
+    }
+    // upload images
+    uploadConsentForm(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+        return res.status(500).json(err);
+    } else if (err) {
+        return res.status(500).json(err);
+    } else {
+        
+        // extract form data from the request body
+        const { files, ...others } = req.body;
+        const data = JSON.parse(others.data)
+        data.clinician_id = req._id
+
+        const newEntry = new Patient(data);
+  
+        const savedPatient = await newEntry.save();
+        res.status(200).json(savedPatient);
+    }
+    });
+    
     } catch (error) {
     res.status(500).json(error);
     console.log(error);

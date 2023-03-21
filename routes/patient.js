@@ -5,47 +5,6 @@ const User = require("../models/User");
 const Role = require("../models/Role");
 const { authenticateToken, checkPermissions } = require("../middleware/auth");
 
-// add new patient
-router.post("/add", authenticateToken, async (req, res) => {
-
-  if(!checkPermissions(req.permissions, 300)){
-    return res.status(401).json({ message: "Unauthorized access"});
-  }
-
-  try {
-    const patient = await Patient.findOne({
-      patient_id: req.body.patient_id,
-      clinician_id: req._id,
-    });
-
-    if (patient) {
-      const others = patient._doc;
-      others["message"] = "Patient ID already exists";
-      return res.status(401).json(others);
-    } else {
-      const newPatient = new Patient({
-        patient_id: req.body.patient_id,
-        clinician_id: req._id,
-        patient_name: req.body.patient_name,
-        risk_factors: req.body.risk_factors,
-        DOB: req.body.DOB,
-        gender: req.body.gender,
-        histo_diagnosis: req.body.histo_diagnosis,
-        medical_history: req.body.medical_history,
-        family_history: req.body.family_history,
-        systemic_disease: req.body.systemic_disease,
-        contact_no: req.body.contact_no
-      });
-
-      const patient = await newPatient.save();
-      const others = patient._doc;
-      others["message"] = "Successfully added";
-      res.status(200).json(others);
-    }
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
 
 //update patient details
 router.post("/update/:id", authenticateToken ,async (req, res) => {
@@ -232,7 +191,7 @@ router.get("/reviewer/all", authenticateToken, async (req, res) => {
     roles.forEach(element => {
       roleArray.push(element.role)
     });
-    const reviwers = await User.find({ "role": { $in: roleArray } },{username:1,reg_no:1});
+    const reviwers = await User.find({ "role": { $in: roleArray }, "availability":true},{username:1,reg_no:1});
 
     if (reviwers) {
       return res.status(200).json(reviwers);
