@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/dbconfig");
 const cookieParser = require("cookie-parser");
+const emailService = require("./utils/emailService");
 const path = require("path");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
@@ -28,6 +29,20 @@ app.listen(PORT, () => {
 app.get("/", (req, res) => {
   res.send("Welcome to server! this is server side test");
 });
+
+
+// this code is here only to check email template
+app.get("/sendemail", (req, res) => {
+  emailService
+  .sendEmail("ADD_YOUR_EMAIL_ADDRESS_HERE", "ACCEPT", "", "Name")
+  .then((response) => {
+    res.status(200).json({ message: "Email is sent!" });
+  })
+  .catch((error) => {
+    res.status(200).json({message:"Email notification Failed"});
+  });
+});
+
 
 // import routes
 const userAuthRoute = require("./routes/userAuth");
