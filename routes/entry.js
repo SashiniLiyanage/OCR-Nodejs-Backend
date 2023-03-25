@@ -103,7 +103,7 @@ router.get("/get/patient/:id", authenticateToken, async (req, res) => {
     try {
         const entries = await TeleConEntry.find(
             {clinician_id: req._id, patient: req.params.id},
-            {_id:1, reveiwers:1, reveiwes:1, patient:1, createdAt:1, updatedAt: 1, updated:1, images:1}
+            {_id:1, reviewers:1, reviewes:1, patient:1, createdAt:1, updatedAt: 1, updated:1, images:1}
         )
         .populate('reviewers', 'username') // Only select the name
         .populate('patient', 'patient_id patient_name') // Only select the name
@@ -175,7 +175,7 @@ router.post("/reviewer/add/:id", authenticateToken, async (req, res) => {
             telecon_entry: req.params.id,
             reviewer_id: req.body.reviewer_id,
             checked: false,
-            reveiwed: false
+            reviewed: false
         });
   
         const savedAssignement = await newAssignement.save();
@@ -284,13 +284,14 @@ router.get("/shared/all", authenticateToken, async (req, res) => {
 
     const pageSize = 20;
     const page = req.query.page? req.query.page: 1;
-    const reveiwed = req.query.filter && req.query.filter === "Reviewed"? true: false;
+    const filter = {reviewer_id: req._id}
+
+    if(req.query.filter && req.query.filter !== "All"){
+        filter["reviewed"] = req.query.filter === "Reviewed"
+    }
 
     try {
-        const entries = await Assignment.find(
-            {reviewer_id: req._id, reveiwed: reveiwed},
-            {}
-        )
+        const entries = await Assignment.find(filter,{})
         .populate({
             path: "telecon_entry",
             select: "clinician_id patient",
@@ -334,7 +335,8 @@ router.get("/shared/data/:id", authenticateToken, async (req, res) => {
             if(entry){
                 const data = entry._doc;
                 data["assignedAt"] = assignment.createdAt;
-                data["reviewed"] = assignment.reveiwed;
+                data["reviewed"] = assignment.reviewed;
+                data["checked"] = assignment.checked;
                 return res.status(200).json(entry);
             }
         } 
@@ -389,7 +391,7 @@ router.post("/reviewer/change/:id", authenticateToken, async (req, res) => {
                 telecon_entry: assignement.telecon_entry,
                 reviewer_id: req.body.reviewer_id,
                 checked: false,
-                reveiwed: false
+                reviewed: false
             });
             const savedAssignement = await newAssignement.save();
 
@@ -416,7 +418,8 @@ router.post("/reviewer/change/:id", authenticateToken, async (req, res) => {
 });
 
 
-// remove a reviewers
+// add new review
+// id is telecon _id
 router.post("/review/:id", authenticateToken, async (req, res) => {
 
     if(!checkPermissions(req.permissions, 200)){
@@ -437,6 +440,12 @@ router.post("/review/:id", authenticateToken, async (req, res) => {
                 other_comments: req.body.other_comments
             };
 
+            const update = await Assignment.findOneAndUpdate({
+                reviewer_id: req._id,
+                telecon_entry: req.params.id
+            },{
+                reviewed: true
+            })
 
             Review.create(newReview, function (error, docs) {
                 if (error) {
@@ -452,6 +461,28 @@ router.post("/review/:id", authenticateToken, async (req, res) => {
         } else {
           return res.status(404).json({ message: "Entry is not found" });
         }
+
+    } catch (error) {
+      res.status(500).json({ error: error, message: error.message });
+    }
+});
+
+// mark as read
+// id is assignment id
+router.post("/mark/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, 200)){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+
+        const update = await Assignment.findByIdAndUpdate(req.params.id,{
+            checked: true
+        })
+
+        return res.status(200).json({ message: "marked as read" });
+        
 
     } catch (error) {
       res.status(500).json({ error: error, message: error.message });

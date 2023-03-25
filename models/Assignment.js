@@ -15,7 +15,7 @@ const AssignentSchema = new mongoose.Schema({
         type: Boolean,
         default:false
     },
-    reveiwed:{
+    reviewed:{
         type: Boolean,
         default:false
     }
