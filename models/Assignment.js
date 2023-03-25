@@ -6,7 +6,7 @@ const AssignentSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
-    telecon_entry_id: {
+    telecon_entry: {
         type: mongoose.Types.ObjectId,
         ref: "TeleConEntry",
         required: true,

@@ -95,7 +95,7 @@ router.get("/get", authenticateToken, async (req, res) => {
   }else if(req.query.filter && req.query.filter === "Created Date"){
     filter = {createdAt: sort}
   }else if(req.query.filter && req.query.filter === "Updated Date"){
-    filter = {UpdatedAt: sort}
+    filter = {updatedAt: sort}
   }else{
     filter = {patient_id: sort}
   }

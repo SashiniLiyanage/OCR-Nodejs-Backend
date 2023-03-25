@@ -21,11 +21,7 @@ const ReviewSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    review_suggestions: {
-      type: String,
-      default: "",
-    },
-    review_comment: {
+    referral_suggestions: {
       type: String,
       default: "",
     },
