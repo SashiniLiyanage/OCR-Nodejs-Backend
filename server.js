@@ -70,6 +70,9 @@ const userRoute = require("./routes/user");
 const TeleConEntry = require("./models/TeleConEntry");
 app.use("/api/user", userRoute);
 
+const dashboardRoutes = require("./routes/DashboardRoutes/dashboard");
+app.use("/api/dashboard", dashboardRoutes);
+
 app.use("/Storage", express.static(path.join(__dirname, "/Storage")));
 app.use("/Storage/images",express.static(path.join(__dirname, "/Storage/images")));
 app.use("/Storage/reports",express.static(path.join(__dirname, "/Storage/reports")));
