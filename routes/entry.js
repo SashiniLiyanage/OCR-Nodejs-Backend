@@ -61,15 +61,25 @@ router.get("/get", authenticateToken, async (req, res) => {
     if(req.query.filter && req.query.filter === "Created Date"){
         filter = {createdAt: -1}
     }else if(req.query.filter && req.query.filter === "Updated Date"){
-        filter = {UpdatedAt: -1}
+        filter = {updatedAt: -1}
     }else{
         filter = {createdAt: -1}
     }
 
+    var condition = {clinician_id: req._id}
+    
+    if(req.query.filter && req.query.filter === "Assigned"){
+        condition["reviewers.0"] = {"$exists": true}
+    }else if(req.query.filter && req.query.filter === "Unassigned"){
+        condition["reviewers"] = { $size: 0 }
+    }else if(req.query.filter && req.query.filter === "Reviewed"){
+        condition["reviews.0"] = {"$exists": true}
+    }else if(req.query.filter && req.query.filter === "Unreviewed"){
+        condition["reviews"] = { $size: 0 }
+    }
+
     try {
-        const entries = await TeleConEntry.find(
-            {clinician_id: req._id},
-            {}
+        const entries = await TeleConEntry.find(condition,{}
         )
         .populate('reviewers', 'username') // Only select the name
         .populate('patient', 'patient_id patient_name') // Only select the name
@@ -78,7 +88,7 @@ router.get("/get", authenticateToken, async (req, res) => {
         return res.status(200).json(entries);
             
     } catch (err) {
-        return res.status(500).json({ message: err });
+        return res.status(500).json(err);
     }
 });
 
@@ -95,7 +105,7 @@ router.get("/get/patient/:id", authenticateToken, async (req, res) => {
     var filter = {};
 
     if(req.query.filter && req.query.filter === "Updated Date"){
-        filter = {UpdatedAt: -1}
+        filter = {updatedAt: -1}
     }else{
         filter = {createdAt: -1}
     }
@@ -103,7 +113,7 @@ router.get("/get/patient/:id", authenticateToken, async (req, res) => {
     try {
         const entries = await TeleConEntry.find(
             {clinician_id: req._id, patient: req.params.id},
-            {_id:1, reviewers:1, reviewes:1, patient:1, createdAt:1, updatedAt: 1, updated:1, images:1}
+            {}
         )
         .populate('reviewers', 'username') // Only select the name
         .populate('patient', 'patient_id patient_name') // Only select the name
@@ -112,10 +122,57 @@ router.get("/get/patient/:id", authenticateToken, async (req, res) => {
         return res.status(200).json(entries);
             
     } catch (err) {
-        return res.status(500).json({ message: err });
+        return res.status(500).json(err);
     }
 });
 
+// get shared patients entries
+// view only
+// id is patient _id
+router.get("/shared/patient/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, 200)){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    const pageSize = 20;
+    const page = req.query.page? req.query.page: 1;
+
+    var filter = {};
+
+    if(req.query.filter && req.query.filter === "Updated Date"){
+        filter = {updatedAt: -1}
+    }else{
+        filter = {createdAt: -1}
+    }
+
+    try {
+        // check if there's an assigned entry
+        const entry = await TeleConEntry.findOne({
+            patient: req.params.id,
+            reviewers:  { $in: [req._id] } 
+        })
+  
+        if(entry){
+
+            const entries = await TeleConEntry.find(
+                {patient: req.params.id},
+                {}
+            )
+            .populate('reviewers', 'username') // Only select the name
+            .populate('patient', 'patient_id patient_name') // Only select the name
+            .sort(filter).skip((page-1)*pageSize).limit(pageSize);
+
+            return res.status(200).json(entries);
+    
+        }
+
+        return res.status(404).json({message:"Entries not found"});
+            
+    } catch (err) {
+        return res.status(500).json(err);
+    }
+});
 
 // get one entry
 router.get("/get/:id", authenticateToken, async (req, res) => {
@@ -143,7 +200,7 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
             
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ message: err });
+        return res.status(500).json(err);
     }
 });
 
@@ -313,6 +370,39 @@ router.get("/shared/all", authenticateToken, async (req, res) => {
         return res.status(500).json({ message: err });
     }
 });
+
+// get one shared entry
+// view only
+// id is entry _id
+router.get("/shared/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, 200)){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+        const entry = await TeleConEntry.findOne({
+            _id: req.params.id,
+            reviewers:  { $in: [req._id] } 
+        },{})
+        .populate('reviewers', "username _id reg_no")
+        .populate('patient', "patient_name patient_id _id")
+        .populate('images')
+        .populate('reports')
+
+        if(entry){
+            return res.status(200).json(entry);
+        }else{
+            return res.status(404).json({message:"Entry not found"});
+        }
+        
+            
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json(err);
+    }
+});
+
 
 // get shared entry
 // id is assignment _id

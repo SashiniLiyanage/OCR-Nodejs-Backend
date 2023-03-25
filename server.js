@@ -98,7 +98,7 @@ const UploadRoute = require("./routes/upload");
 app.use("/api/user/upload", UploadRoute);
 
 const userRoute = require("./routes/user");
-app.use("/api/user", userRoute);
+app.use("/api/user/self", userRoute);
 
 app.use("/Storage", express.static(path.join(__dirname, "/Storage")));
 app.use("/Storage/images",express.static(path.join(__dirname, "/Storage/images")));
