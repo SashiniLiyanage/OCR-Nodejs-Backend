@@ -51,20 +51,19 @@ router.post("/password", authenticateToken, async (req, res) => {
 //update user details
 router.post("/update", authenticateToken, async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.email });
+    const user = await User.findById(req._id);
 
     if (user) {
-      const updateUsername = await User.findOneAndUpdate(
-        { email: req.email },
+      const updateUsername = await User.findByIdAndUpdate(req._id,
         {
           username: req.body.username,
-          username: req.body.hospital,
-          username: req.body.contact_no,
-          username: req.body.availability,
+          hospital: req.body.hospital,
+          contact_no: req.body.contact_no,
+          availability: req.body.availability,
         }
       );
 
-      const user = await User.findOne({ email: req.email });
+      const user = await User.findById(req._id);
 
       const { password, ...others } = user._doc;
       others["message"] = "User details updated succesfully";
@@ -74,81 +73,6 @@ router.post("/update", authenticateToken, async (req, res) => {
     }
   } catch (error) {
     res.status(500).json(error);
-  }
-});
-
-// get a teleconsultation entry
-router.get(
-  "/entry/get/:patientID/:entryID",
-  authenticateToken,
-  async (req, res) => {
-    try {
-      // get the clinincian who requested the entry addition
-      const requestedClinician = await User.findOne({ email: req.email });
-
-      if (requestedClinician) {
-        const releventPatient = await Patient.findOne({
-          patient_id: req.params.patientID,
-          clinician_id: requestedClinician._id,
-        });
-        // check whether the patient exists under the clinician
-        if (releventPatient) {
-          const requestedEntry = await TeleConEntry.findOne({
-            patient_id: releventPatient._id,
-            _id: req.params.entryID,
-          });
-          // check whether the entry exists
-          if (requestedEntry) {
-            const responseDoc = requestedEntry._doc;
-            responseDoc["message"] = "Entry retrieved successfully!";
-            res.status(200).json(responseDoc);
-          } else {
-            return res.status(404).json({ message: "Entry not found" });
-          }
-        } else {
-          return res.status(404).json({ message: "Patient is not registered" });
-        }
-      } else {
-        return res.status(404).json({ message: "Unauthorized Access" });
-      }
-    } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
-    }
-  }
-);
-
-// get all teleconsultation entries under a patient/clinician pair
-router.get("/entry/get/:patientID", authenticateToken, async (req, res) => {
-  try {
-    // get the clinincian who requested the entry addition
-    const requestedClinician = await User.findOne({ email: req.email });
-
-    if (requestedClinician) {
-      const releventPatient = await Patient.findOne({
-        patient_id: req.params.patientID,
-        clinician_id: requestedClinician._id,
-      });
-      // check whether the patient exists under the clinician
-      if (releventPatient) {
-        const entries = await TeleConEntry.find({
-          patient_id: releventPatient._id,
-        });
-        if (entries) {
-          res.status(200).json({
-            response: entries,
-            message: "Entries retrieved successfully!",
-          });
-        } else {
-          return res.status(404).json({ message: "No entries found!" });
-        }
-      } else {
-        return res.status(404).json({ message: "Patient is not registered" });
-      }
-    } else {
-      return res.status(404).json({ message: "Unauthorized Access" });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error, message: error.message });
   }
 });
 

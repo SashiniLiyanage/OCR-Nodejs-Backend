@@ -4,6 +4,7 @@ const Patient = require("../models/Patient");
 const User = require("../models/User");
 const Role = require("../models/Role");
 const { authenticateToken, checkPermissions } = require("../middleware/auth");
+const TeleConEntry = require("../models/TeleConEntry");
 
 
 //update patient details
@@ -95,7 +96,7 @@ router.get("/get", authenticateToken, async (req, res) => {
   }else if(req.query.filter && req.query.filter === "Created Date"){
     filter = {createdAt: sort}
   }else if(req.query.filter && req.query.filter === "Updated Date"){
-    filter = {UpdatedAt: sort}
+    filter = {updatedAt: sort}
   }else{
     filter = {patient_id: sort}
   }
@@ -166,6 +167,34 @@ router.get("/:id", authenticateToken, async (req, res) => {
     });
 
     if (patient) {
+      return res.status(200).json(patient);
+    } else {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+  } catch (err) {
+    return res.status(500).json(err);
+  }
+});
+
+
+// get one shared patient
+// id is patients _id
+router.get("/shared/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, 200)){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
+
+  try {
+    // check if there's an assigned entry
+    const entry = await TeleConEntry.findOne({
+      patient: req.params.id,
+      reviewers:  { $in: [req._id] } 
+    })
+
+    const patient = await Patient.findById(req.params.id);
+
+    if (patient && entry) {
       return res.status(200).json(patient);
     } else {
       return res.status(404).json({ message: "Patient not found" });

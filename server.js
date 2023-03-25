@@ -5,6 +5,8 @@ const cors = require("cors");
 const connectDB = require("./config/dbconfig");
 const cookieParser = require("cookie-parser");
 const emailService = require("./utils/emailService");
+const TeleConEntry = require("./models/TeleConEntry");
+const Patient = require("./models/Patient");
 const path = require("path");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
@@ -34,13 +36,42 @@ app.get("/", (req, res) => {
 // this code is here only to check email template
 app.get("/sendemail", (req, res) => {
   emailService
-  .sendEmail("ADD_YOUR_EMAIL_ADDRESS_HERE", "ACCEPT", "", "Name")
+  .sendEmail("nimthara.liyanage@gmail.com", "ACCEPT", "", "Name")
   .then((response) => {
     res.status(200).json({ message: "Email is sent!" });
   })
   .catch((error) => {
     res.status(200).json({message:"Email notification Failed"});
   });
+});
+
+
+app.get("/getpercentage", async (req, res) => {
+  Patient.aggregate([
+    { $unwind: "$risk_factors" },
+    { $group: { _id: "$risk_factors.habit", count: { $sum: 1 } } },
+    { $project: { _id: 0, item: "$_id", count: 1 } }
+  ], function(err, results) {
+    if (err) {
+      res.send(err);
+    } else {
+      Patient.countDocuments({}, function(err, count) {
+        if (err) {
+          res.send(err);
+        } else {
+          const arr = []
+          results.forEach(result => {
+            const percentage = (result.count / count) * 100;
+            arr.push(`${result.item}: ${percentage}%`);
+          });  
+
+          res.send(arr)
+        }
+      });
+    }
+  });
+  
+  
 });
 
 
@@ -67,8 +98,7 @@ const UploadRoute = require("./routes/upload");
 app.use("/api/user/upload", UploadRoute);
 
 const userRoute = require("./routes/user");
-const TeleConEntry = require("./models/TeleConEntry");
-app.use("/api/user", userRoute);
+app.use("/api/user/self", userRoute);
 
 const dashboardRoutes = require("./routes/DashboardRoutes/dashboard");
 app.use("/api/dashboard", dashboardRoutes);

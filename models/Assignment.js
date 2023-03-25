@@ -6,7 +6,7 @@ const AssignentSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
-    telecon_entry_id: {
+    telecon_entry: {
         type: mongoose.Types.ObjectId,
         ref: "TeleConEntry",
         required: true,
@@ -15,7 +15,7 @@ const AssignentSchema = new mongoose.Schema({
         type: Boolean,
         default:false
     },
-    reveiwed:{
+    reviewed:{
         type: Boolean,
         default:false
     }
