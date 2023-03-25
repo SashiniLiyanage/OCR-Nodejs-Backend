@@ -5,7 +5,19 @@ const HospitalSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    details:{
+    category:{
+        type: String,
+        default: ""
+    },
+    city:{
+        type: String,
+        default: ""
+    },
+    address:{
+        type: String,
+        default: ""
+    },
+    contact_no:{
         type: String,
         default: ""
     }
@@ -16,4 +28,4 @@ const HospitalSchema = new mongoose.Schema({
 }
 );
 
-module.exports = mongoose.model("Hospital",HospitalSchema)
+module.exports = mongoose.model("Hospital",HospitalSchema,"hospitals")

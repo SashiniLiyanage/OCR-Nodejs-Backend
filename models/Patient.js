@@ -1,39 +1,61 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const PatientSchema = new mongoose.Schema({
-    patient_id:{
-        type: String,
-        required: true,
+const PatientSchema = new mongoose.Schema(
+  {
+    patient_id: {
+      type: String,
+      required: true,
     },
-    risk_factors:{
-        type: Object,
-        default: {
-            smoking: false,
-            alcohol: false,
-            betel: false
-        }
+    clinician_id: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    age:{
-        type: Number,
-        default: 0,
+    patient_name: {
+      type: String,
+      required: true,
     },
-    gender:{
-        type: String,
-        default: "",
+    risk_factors: {
+      type: Array,
+      default: [],
     },
-    histo_diagnosis:{
-        type: String,
-        default: ""
+    DOB: {
+      type: Date,
+      required: true,
     },
-    category:{
-        type: String,
-        default: "Unknown"
-    }
-},
-{
+    gender: {
+      type: String,
+      default: "",
+    },
+    histo_diagnosis: {
+      type: String,
+      default: "",
+    },
+    medical_history: {
+      type: Array,
+      default: [],
+    },
+    family_history: {
+      type: Array,
+      default: [],
+    },
+    systemic_disease: {
+      type: String,
+      default: "",
+    },
+    contact_no: {
+      type: String,
+      default: "+94",
+    },
+    consent_form: {
+      type: String,
+      default: "",
+    },
+  },
+  {
     versionKey: false,
-    timestamps:true
-}
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("Patient",PatientSchema)
+module.exports = mongoose.model("Patient", PatientSchema, "patients");

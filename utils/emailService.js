@@ -43,13 +43,12 @@ function sendEmail(recieversEmail, type, message, name){
             from: `OCR Tech Team <${process.env.SENDERS_EMAIL}>`,
             to: recieversEmail,
             subject: 'OCRP Account Registrations',
-            text:'Your OCRP account is ready to use. Use your credentials to login to the application.',
+            matext:'Your OCRP account is ready to use. Use your credentials to login to the application.',
             html: body(type,message,name)
         }
 
         transporter.sendMail(mail_config, function(error, info){
             if(error){
-                console.log(error)
                 return reject({message: 'Error sending emails'})
             }
 
