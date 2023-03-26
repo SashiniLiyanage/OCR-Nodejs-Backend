@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 // this code is here only to check email template
 app.get("/sendemail", (req, res) => {
   emailService
-  .sendEmail("nimthara.liyanage@gmail.com", "ACCEPT", "", "Name")
+  .sendEmail("saadiajameel54@gmail.com", "ACCEPT", "", "Saadia")
   .then((response) => {
     res.status(200).json({ message: "Email is sent!" });
   })
