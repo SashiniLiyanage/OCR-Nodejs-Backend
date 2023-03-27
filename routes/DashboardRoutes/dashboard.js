@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const User = require("../../models/User");
+const Image = require("../../models/Image");
 const Patient = require("../../models/Patient");
+
 const { authenticateToken, checkPermissions } = require("../../middleware/auth");
 
 
@@ -36,5 +38,61 @@ router.get("/percentages", async (req, res) => {
     }
   );
 });
+
+
+// GET route to get the total number of doctors and patients
+router.get("/totals", async (req, res) => {
+  try {
+    const patients = await Patient.countDocuments();
+    const doctors = await User.countDocuments();
+    const images = await Image.countDocuments();
+
+    res
+      .status(200)
+      .json({ doctors: doctors, patients: patients, images: images });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// GET route to get the total number of doctors
+router.get("/doctors", async (req, res) => {
+  try {
+    User.countDocuments({}, function (err, count) {
+      if (err) throw err;
+
+      res.status(200).json({ count: count });
+    });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// GET route to get the total number of doctors
+router.get("/patients", async (req, res) => {
+  try {
+    Patient.countDocuments({}, function (err, count) {
+      if (err) throw err;
+
+      res.status(200).json({ count: count });
+    });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// GET route to get the total number of doctors
+router.get("/images", async (req, res) => {
+  try {
+    Image.countDocuments({}, function (err, count) {
+      if (err) throw err;
+
+      res.status(200).json({ count: count });
+    });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 
 module.exports = router;
