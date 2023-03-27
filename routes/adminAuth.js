@@ -30,8 +30,8 @@ router.post("/signup", async (req, res) => {
       others["message"] = "Successfully signed in";
       res.status(200).json(others);
     }
-  } catch (error) {
-    res.status(500).json(error);
+  } catch (err) {
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 

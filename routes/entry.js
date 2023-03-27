@@ -4,8 +4,6 @@ const Patient = require("../models/Patient");
 const TeleConEntry = require("../models/TeleConEntry");
 const Image = require("../models/Image");
 const Report = require("../models/Report");
-const User = require("../models/User");
-const Role = require("../models/Role");
 const Review = require("../models/Review");
 const Assignment = require("../models/Assignment");
 
@@ -14,7 +12,7 @@ const { authenticateToken, checkPermissions } = require("../middleware/auth");
 // add a teleconsultation entry
 router.post("/add/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -32,24 +30,28 @@ router.post("/add/:id", authenticateToken, async (req, res) => {
             findings: req.body.findings,
             current_habits: req.body.current_habits
           });
-  
-          const savedEntry = await newEntry.save();
-          res.status(200).json(savedEntry);
+
+          try{
+            const savedEntry = await newEntry.save();
+            res.status(200).json(savedEntry);
+          }catch(err){
+            res.status(500).json({message: "Tele consultation entry failed" });
+          }
 
         } else {
           return res.status(404).json({ message: "Patient is not registered" });
         }
 
     } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
 
-// get all entries
+// get all entries added by user
 router.get("/get", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -82,20 +84,20 @@ router.get("/get", authenticateToken, async (req, res) => {
         const entries = await TeleConEntry.find(condition,{}
         )
         .populate('reviewers', 'username') // Only select the name
-        .populate('patient', 'patient_id patient_name') // Only select the name
+        .populate('patient', 'patient_id patient_name') // Only select the name and id
         .sort(filter).skip((page-1)*pageSize).limit(pageSize);
 
         return res.status(200).json(entries);
             
     } catch (err) {
-        return res.status(500).json(err);
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
 // get patients entries
 router.get("/get/patient/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -122,16 +124,15 @@ router.get("/get/patient/:id", authenticateToken, async (req, res) => {
         return res.status(200).json(entries);
             
     } catch (err) {
-        return res.status(500).json(err);
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
-// get shared patients entries
-// view only
+// get shared patients entries (view only data)
 // id is patient _id
 router.get("/shared/patient/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -155,29 +156,35 @@ router.get("/shared/patient/:id", authenticateToken, async (req, res) => {
   
         if(entry){
 
-            const entries = await TeleConEntry.find(
-                {patient: req.params.id},
-                {}
-            )
-            .populate('reviewers', 'username') // Only select the name
-            .populate('patient', 'patient_id patient_name') // Only select the name
-            .sort(filter).skip((page-1)*pageSize).limit(pageSize);
-
-            return res.status(200).json(entries);
+            try{
+                const entries = await TeleConEntry.find(
+                    {patient: req.params.id},
+                    {}
+                )
+                .populate('reviewers', 'username') // Only select the name
+                .populate('patient', 'patient_id patient_name') // Only select the name
+                .sort(filter).skip((page-1)*pageSize).limit(pageSize);
+    
+                return res.status(200).json(entries);
+            }catch(err){
+                return res.status(500).json({message:"Internal Server Error"});
+            }
+            
     
         }
 
-        return res.status(404).json({message:"Entries not found"});
+        return res.status(404).json({message:"Entries Not Found"});
             
     } catch (err) {
-        return res.status(500).json(err);
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
-// get one entry
+// get one entry details added by users
+// id is entry _id
 router.get("/get/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -199,15 +206,15 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
         
             
     } catch (err) {
-        console.log(err)
-        return res.status(500).json(err);
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
-// add a reviewers
+// add a reviewer by user
+// id is entry _id
 router.post("/reviewer/add/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -217,15 +224,21 @@ router.post("/reviewer/add/:id", authenticateToken, async (req, res) => {
       if (entry) {
 
         if(entry.reviewers.includes(req.body.reviewer_id)){
-            const updatedEntry = await TeleConEntry.findOne(
-                {clinician_id: req._id, _id:req.params.id},
-                {}
-            )
-            .populate('reviewers', "username _id reg_no")
-            .populate('patient', "patient_name patient_id _id")
-            .populate('images')
-            .populate('reports')
-            return res.status(200).json(updatedEntry);
+
+            try{
+                const updatedEntry = await TeleConEntry.findOne(
+                    {clinician_id: req._id, _id:req.params.id},
+                    {}
+                )
+                .populate('reviewers', "username _id reg_no")
+                .populate('patient', "patient_name patient_id _id")
+                .populate('images')
+                .populate('reports')
+                return res.status(200).json(updatedEntry);
+            }catch(err){
+                return res.status(500).json({message: "Internal Server Error!"});
+            }
+            
         }
 
         const newAssignement = new Assignment({
@@ -235,99 +248,96 @@ router.post("/reviewer/add/:id", authenticateToken, async (req, res) => {
             reviewed: false
         });
   
-        const savedAssignement = await newAssignement.save();
+        try{
+            await newAssignement.save();
+            entry.reviewers.push(req.body.reviewer_id);
+            entry.save();
 
-        entry.reviewers.push(req.body.reviewer_id);
-        entry.save();
-    
-        const updatedEntry = await TeleConEntry.findOne(
-            {clinician_id: req._id, _id:req.params.id},
-            {}
-        )
-        .populate('reviewers', "username _id reg_no")
-        .populate('patient', "patient_name patient_id _id")
-        .populate('images')
-        .populate('reports')
-
-        return res.status(200).json(updatedEntry);
-        
+            return res.status(200).json({ message: "Reviewer is added" });
+        }catch(err){
+            res.status(500).json({ error: err, message: "Internal Server Error!" });
+        }  
     } else {
-        return res.status(404).json({ message: "Entry is not found" });
+        return res.status(404).json({ message: "Entry not found" });
     }
 
-    } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
-// remove a reviewers
+// remove a reviewer
+// id is entry _id
 router.post("/reviewer/remove/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
     try {
       const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id });
   
-      if (entry) {
+        if (entry) {
 
-        await Assignment.deleteOne({telecon_entry : req.params.id, reviewer_id:req.body.reviewer_id});
+            try{
+                await Assignment.deleteOne({telecon_entry : req.params.id, reviewer_id:req.body.reviewer_id});
 
-        
-        const update = await TeleConEntry.findByIdAndUpdate(entry._id,{
-           $pullAll:{reviewers:[req.body.reviewer_id]}
-        })
-    
-        const updatedEntry = await TeleConEntry.findOne(
-            {clinician_id: req._id, _id:req.params.id},
-            {}
-        )
-        .populate('reviewers', "username _id reg_no")
-        .populate('patient', "patient_name patient_id _id")
-        .populate('images')
-        .populate('reports')
-        return res.status(200).json(updatedEntry);
+                await TeleConEntry.findByIdAndUpdate(entry._id,{
+                $pullAll:{reviewers:[req.body.reviewer_id]}
+                })
+            
+                return res.status(200).json({ message: "Reviewer is removed" });
+
+            }catch(err){
+                res.status(500).json({ error: err, message: "Internal Server Error!" });
+            }
 
         } else {
           return res.status(404).json({ message: "Entry is not found" });
         }
 
-    } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+    } catch (err) {
+      res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
-// delete an entry
+// delete an entry within 24 hours
+// id is entry _id
 router.post("/delete/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 300)){
+    if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
     try {
-      const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id });
+        const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id });
 
         const hours = (new Date() - new Date(entry.createdAt))/ (3600 * 1000);
+        
         if(hours >= 24){
             return res.status(401).json({ message: "Unauthorized access"});
         }
 
         if (entry) {
 
-            await Assignment.deleteMany({telecon_entry : req.params.id});
-            await Image.deleteMany({telecon_entry_id : req.params.id});
-            await Report.deleteMany({telecon_entry_id : req.params.id});
-            await TeleConEntry.findByIdAndDelete(req.params.id)
+            try{
+                await Assignment.deleteMany({telecon_entry : req.params.id});
+                await Image.deleteMany({telecon_entry_id : req.params.id});
+                await Report.deleteMany({telecon_entry_id : req.params.id});
+                await TeleConEntry.findByIdAndDelete(req.params.id)
 
-            return res.status(200).json({ message: "Entry is deleted successfully" });
+                return res.status(200).json({ message: "Entry is deleted successfully" });
+
+            }catch(err){
+                return res.status(500).json({ error: err, message: "Internal Server Error!" });
+            }
 
         } else {
-            return res.status(404).json({ message: "Entry not found" });
+            return res.status(404).json({ message: "Entry Not Found!" });
         }
 
-    } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+    } catch (err) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
@@ -335,7 +345,7 @@ router.post("/delete/:id", authenticateToken, async (req, res) => {
 // get all shared entries
 router.get("/shared/all", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -367,21 +377,20 @@ router.get("/shared/all", authenticateToken, async (req, res) => {
         return res.status(200).json(entries);
             
     } catch (err) {
-        return res.status(500).json({ message: err });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
-// get one shared entry
-// view only
+// get one shared entry (view only)
 // id is entry _id
 router.get("/shared/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
     try {
-        const entry = await TeleConEntry.findOne({
+        const entry = await TeleConEntry.findOne({ 
             _id: req.params.id,
             reviewers:  { $in: [req._id] } 
         },{})
@@ -398,17 +407,16 @@ router.get("/shared/:id", authenticateToken, async (req, res) => {
         
             
     } catch (err) {
-        console.log(err)
-        return res.status(500).json(err);
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
 
-// get shared entry
+// get assigned entry details
 // id is assignment _id
 router.get("/shared/data/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -416,31 +424,42 @@ router.get("/shared/data/:id", authenticateToken, async (req, res) => {
         const assignment = await Assignment.findById(req.params.id);  
 
         if (assignment) {
-            const entry = await TeleConEntry.findById(assignment.telecon_entry)
-            .populate('clinician_id', "username reg_no")
-            .populate('patient', "patient_name patient_id _id")
-            .populate('images')
-            .populate('reports')
 
-            if(entry){
-                const data = entry._doc;
-                data["assignedAt"] = assignment.createdAt;
-                data["reviewed"] = assignment.reviewed;
-                data["checked"] = assignment.checked;
-                return res.status(200).json(entry);
+            try{
+                const entry = await TeleConEntry.findById(assignment.telecon_entry)
+                .populate('clinician_id', "username reg_no")
+                .populate('patient', "patient_name patient_id _id")
+                .populate('images')
+                .populate('reports')
+
+                if(entry){
+                    const data = entry._doc;
+                    data["assignedAt"] = assignment.createdAt;
+                    data["reviewed"] = assignment.reviewed;
+                    data["checked"] = assignment.checked;
+                    return res.status(200).json(entry);
+                }
+
+            }catch(err){
+                return res.status(500).json({ error: err, message: "Internal Server Error!" });
             }
+            
         } 
             
-        return res.status(404).json({ message: "Entry not found" });
+        return res.status(404).json({ message: "Entry Not Found!" });
             
     } catch (err) {
-        return res.status(500).json({ message: err });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
 // get entry reviews
-// id is teleconsultation _id
+// id is entry _id
 router.get("/reviews/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [200, 300])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
 
     try {
         const reviews = await Review.find({
@@ -454,56 +473,68 @@ router.get("/reviews/:id", authenticateToken, async (req, res) => {
             return res.status(404).json({ message: "Entry not found" });
         } 
     } catch (err) {
-        return res.status(500).json({ message: err });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
 
-// change a reviewers
+// change a reviewer (reviewer assigns another)
 router.post("/reviewer/change/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
     try {
       const assignement = await Assignment.findOne({_id:req.params.id, reviewer_id:req._id});
 
-      if (assignement) {
+        if (assignement) {
 
-       const exists = await Assignment.findOne({
-            reviewer_id:req.body.reviewer_id,
-            telecon_entry: assignement.telecon_entry
-        });
-       
-        if(!exists){
-            const newAssignement = new Assignment({
-                telecon_entry: assignement.telecon_entry,
-                reviewer_id: req.body.reviewer_id,
-                checked: false,
-                reviewed: false
-            });
-            const savedAssignement = await newAssignement.save();
+            try{
+                const exists = await Assignment.findOne({
+                    reviewer_id:req.body.reviewer_id,
+                    telecon_entry: assignement.telecon_entry
+                });
+               
+                if(!exists){
+                    const newAssignement = new Assignment({
+                        telecon_entry: assignement.telecon_entry,
+                        reviewer_id: req.body.reviewer_id,
+                        checked: false,
+                        reviewed: false
+                    });
 
-            await TeleConEntry.findByIdAndUpdate(assignement.telecon_entry,{
-                $push: {reviewers:req.body.reviewer_id}
-            });
+                    try{
+                        const savedAssignement = await newAssignement.save();
+                        await TeleConEntry.findByIdAndUpdate(assignement.telecon_entry,{
+                            $push: {reviewers:req.body.reviewer_id}
+                        });
+
+                    }catch(err){
+                        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+                    }
+                    
+                }
+        
+                await Assignment.deleteOne({_id: req.params.id, reviewer_id:req._id});
+                    
+                const update = await TeleConEntry.findByIdAndUpdate(assignement.telecon_entry,{
+                    $pullAll:{reviewers:[req._id]}
+                })
+        
+               return res.status(200).json({ message: "Reviewer assigned successfully" });
+
+            }catch(err){
+                return res.status(500).json({ error: err, message: "Internal Server Error!" });
+            }
+            
+        
+        } else {
+            return res.status(404).json({ message: "Entry Not Found" });
         }
 
-        await Assignment.deleteOne({_id: req.params.id, reviewer_id:req._id});
-            
-        const update = await TeleConEntry.findByIdAndUpdate(assignement.telecon_entry,{
-            $pullAll:{reviewers:[req._id]}
-        })
-
-       return res.status(200).json({ message: "Reviewer assigned successfully" });
-        
-    } else {
-        return res.status(404).json({ message: "Entry is not found" });
-    }
-
     } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
@@ -512,7 +543,7 @@ router.post("/reviewer/change/:id", authenticateToken, async (req, res) => {
 // id is telecon _id
 router.post("/review/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -530,17 +561,25 @@ router.post("/review/:id", authenticateToken, async (req, res) => {
                 other_comments: req.body.other_comments
             };
 
-            const update = await Assignment.findOneAndUpdate({
-                reviewer_id: req._id,
-                telecon_entry: req.params.id
-            },{
-                reviewed: true
-            })
+            try{
+                await Assignment.findOneAndUpdate({
+                    reviewer_id: req._id,
+                    telecon_entry: req.params.id
+                },{
+                    reviewed: true
+                })
 
+                entry.updated = true;
+                entry.save();
+
+            }catch(err){
+                console.log(err);
+                //ignore the error
+            }
+            
             Review.create(newReview, function (error, docs) {
                 if (error) {
-                    console.log(error)
-                    return res.status(500).json(err);
+                    return res.status(500).json({ error: err, message: "Internal Server Error!" });
                 } else {
                     entry.reviews.push(docs._id);
                     entry.save();
@@ -553,7 +592,7 @@ router.post("/review/:id", authenticateToken, async (req, res) => {
         }
 
     } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
@@ -561,7 +600,7 @@ router.post("/review/:id", authenticateToken, async (req, res) => {
 // id is assignment id
 router.post("/mark/:id", authenticateToken, async (req, res) => {
 
-    if(!checkPermissions(req.permissions, 200)){
+    if(!checkPermissions(req.permissions, [200])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
@@ -575,9 +614,31 @@ router.post("/mark/:id", authenticateToken, async (req, res) => {
         
 
     } catch (error) {
-      res.status(500).json({ error: error, message: error.message });
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
 });
 
+
+// mark as read
+// id is entry id
+router.post("/open/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [300])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+
+        const update = await TeleConEntry.findByIdAndUpdate(req.params.id,{
+            updated: false
+        })
+
+        return res.status(200).json({ message: "marked as read" });
+        
+
+    } catch (error) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
+});
 
 module.exports = router;

@@ -7,12 +7,8 @@ const Role = require("../models/Role");
 
 require('dotenv').config()
 
-const checkPermissions = (permissionList, permission) =>{
-    if(permissionList.includes(permission)){
-        return true;
-    }else{
-        return false;
-    }
+const checkPermissions = (permissions, allowed) =>{
+    return (permissions.some(p => allowed.includes(p)))
 }
 
 const setTokenCookie = (res, token) => {
