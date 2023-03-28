@@ -1,8 +1,6 @@
 const router = require("express").Router();
 const Hospital = require("../models/Hospital");
 const User = require("../models/User");
-const Patient = require("../models/Patient");
-const TeleConEntry = require("../models/TeleConEntry");
 const { authenticateToken } = require("../middleware/auth");
 
 require("dotenv").config();
@@ -13,7 +11,7 @@ router.get("/hospitals", async (req, res) => {
     const hospital = await Hospital.find();
     return res.status(200).json(hospital);
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
@@ -37,14 +35,13 @@ router.post("/password", authenticateToken, async (req, res) => {
         }
       );
 
-      return res
-        .status(200)
-        .json({ message: "Password is changed successfully" });
+      return res.status(200).json({ message: "Password is changed successfully" });
+
     } else {
       return res.status(401).json({ message: "User Not Found" });
     }
-  } catch (error) {
-    res.status(500).json(error);
+  } catch (err) {
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
@@ -63,16 +60,22 @@ router.post("/update", authenticateToken, async (req, res) => {
         }
       );
 
-      const user = await User.findById(req._id);
+      try{
+        const user = await User.findById(req._id);
+        const { password, ...others } = user._doc;
+        others["message"] = "User details updated succesfully";
+        return res.status(200).json(others);
 
-      const { password, ...others } = user._doc;
-      others["message"] = "User details updated succesfully";
-      return res.status(200).json(others);
+      }catch(err){
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+      }
+      
     } else {
       return res.status(401).json({ message: "User Not Found" });
     }
-  } catch (error) {
-    res.status(500).json(error);
+
+  } catch (err) {
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 

@@ -35,26 +35,32 @@ router.post("/signup", async (req, res) => {
       return res.status(200).json({ message: "A request for registration already exists." });
 
     } else {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-      const newUserRequest = new Request({
-        reg_no: req.body.reg_no,
-        username: req.body.username,
-        email: req.body.email,
-        password: hashedPassword,
-        hospital: req.body.hospital,
-        designation: req.body.designation ? req.body.designation : "",
-        contact_no: req.body.contact_no ? req.body.contact_no : ""
-      });
+      try{
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-      const userRequest = await newUserRequest.save();
-      const { password, ...others } = userRequest._doc;
-      others["message"] = "Request is sent successfully. You will receive an Email on acceptance";
-      return res.status(200).json(others);
+        const newUserRequest = new Request({
+          reg_no: req.body.reg_no,
+          username: req.body.username,
+          email: req.body.email,
+          password: hashedPassword,
+          hospital: req.body.hospital,
+          designation: req.body.designation ? req.body.designation : "",
+          contact_no: req.body.contact_no ? req.body.contact_no : ""
+        });
+
+        const userRequest = await newUserRequest.save();
+        const { password, ...others } = userRequest._doc;
+        others["message"] = "Request is sent successfully. You will receive an Email on acceptance";
+        return res.status(200).json(others);
+
+      }catch(err){
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+      }
     }
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
@@ -84,13 +90,10 @@ router.post("/login", async (req, res) => {
     others["message"] = "Successfuly logged in";
     others["permissions"] = rolePermissions.permissions;
 
-    res.status(200).json({
-      accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME },
-      ref: user,
-      others,
-    });
+    res.status(200).json({accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME }, ref: user, others});
+
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 

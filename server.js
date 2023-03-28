@@ -5,7 +5,6 @@ const cors = require("cors");
 const connectDB = require("./config/dbconfig");
 const cookieParser = require("cookie-parser");
 const emailService = require("./utils/emailService");
-const TeleConEntry = require("./models/TeleConEntry");
 const Patient = require("./models/Patient");
 const path = require("path");
 const morgan = require("morgan");

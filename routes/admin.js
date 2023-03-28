@@ -13,7 +13,7 @@ require("dotenv").config();
 // get all requests
 router.get("/requests", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [100])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -23,15 +23,16 @@ router.get("/requests", authenticateToken, async (req, res) => {
       { _id: true, username: true, reg_no: true, hospital: true}
     );
     return res.status(200).json(requests);
+
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // get one request
 router.get("/requests/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [100])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -44,15 +45,16 @@ router.get("/requests/:id", authenticateToken, async (req, res) => {
     } else {
       return res.status(404).json({ message: "Request not found" });
     }
+
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-// delete requests
+// reject a request
 router.post("/requests/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [100])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -82,14 +84,14 @@ router.post("/requests/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Request not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-// accept requests
+// accept a requests
 router.post("/accept/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [100])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -116,7 +118,7 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
         hospital: request.hospital,
         designation: request.designation ? req.body.designation : "",
         contact_no: request.contact_no ? req.body.contact_no : "",
-        availability: request.availability ? request.availability : true,
+        availability: true
       });
 
       try {
@@ -142,14 +144,15 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Request not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // get users by the roles
+// only for read or write access permissions
 router.get("/users/role/:role", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [106, 107])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
   
@@ -168,14 +171,14 @@ router.get("/users/role/:role", authenticateToken, async (req, res) => {
       return res.status(200).json(users);
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-// get all the roles
+// get all the user roles
 router.get("/roles", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [106, 107, 100, 109])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
   
@@ -183,14 +186,14 @@ router.get("/roles", authenticateToken, async (req, res) => {
       const users = await Role.find();
       return res.status(200).json(users);
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-// get one the roles
+// get one user role
 router.get("/roles/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [109])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
   
@@ -202,14 +205,14 @@ router.get("/roles/:id", authenticateToken, async (req, res) => {
         return res.status(404).json({ message: "Role not found"});
       }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-// add a role
+// add a new user role
 router.post("/roles", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [109])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
   
@@ -237,13 +240,14 @@ router.post("/roles", authenticateToken, async (req, res) => {
         return res.status(401).json({message:"Role already exists"});
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
+// update user permissions
 router.post("/roles/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [109])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
   
@@ -271,14 +275,14 @@ router.post("/roles/:id", authenticateToken, async (req, res) => {
         return res.status(404).json({message:"Role not found"});
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // get a specific user
 router.get("/users/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [106, 107])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -292,14 +296,14 @@ router.get("/users/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // update users
 router.post("/update/user/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [107])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -328,14 +332,14 @@ router.post("/update/user/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // delete a user
 router.post("/delete/user/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [107])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -352,14 +356,14 @@ router.post("/delete/user/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // reset user password
 router.post("/reset/user/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [107])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -385,14 +389,14 @@ router.post("/reset/user/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // add hospitals
 router.post("/hospital", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [101])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -419,11 +423,16 @@ router.post("/hospital", authenticateToken, async (req, res) => {
       return res.status(401).json({ message: "Hospital is already added" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
+// update hospital details
 router.post("/hospitals/update/:id", authenticateToken, async (req, res) => {
+
+  if(!checkPermissions(req.permissions, [101])){
+    return res.status(401).json({ message: "Unauthorized access"});
+  }
 
   try {
     const hospital = await Hospital.findById({_id: req.params.id});
@@ -449,13 +458,14 @@ router.post("/hospitals/update/:id", authenticateToken, async (req, res) => {
       return res.status(401).json({ message: "Hospital Not Found" });
     }
   } catch (err) {
-    res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
+// delete a hospital
 router.post("/hospitals/delete/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [101])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -472,7 +482,7 @@ router.post("/hospitals/delete/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Hospital not found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
@@ -480,7 +490,7 @@ router.post("/hospitals/delete/:id", authenticateToken, async (req, res) => {
 // get hospital details
 router.get("/hospitals/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 100)){
+  if(!checkPermissions(req.permissions, [101])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
   
@@ -492,17 +502,12 @@ router.get("/hospitals/:id", authenticateToken, async (req, res) => {
         return res.status(200).json(hospital);
       }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-// get all the roles
-router.get("/option/:name", authenticateToken, async (req, res) => {
-
-  if(!checkPermissions(req.permissions, 100)){
-    return res.status(401).json({ message: "Unauthorized access"});
-  }
-  
+// get options (labels and values)
+router.get("/option/:name", authenticateToken, async (req, res) => {  
   try {
       const options = await Option.findOne({name: {$regex: `^${req.params.name}$`, $options: "i"}});
       if(!options){
@@ -511,7 +516,7 @@ router.get("/option/:name", authenticateToken, async (req, res) => {
         return res.status(200).json(options);
       }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
@@ -525,16 +530,21 @@ router.post("/option", async (req, res) => {
 
     } else {
      
-      const newOption = new Option({
-        name: req.body.name,
-        options: req.body.options,
-      });
-      const saveOption = await newOption.save();
-      res.status(200).json({message:"Option is saved"});
+      try{
+        const newOption = new Option({
+          name: req.body.name,
+          options: req.body.options,
+        });
+        const saveOption = await newOption.save();
+        res.status(200).json({message:"Option is saved"});
+      }catch(err){
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+      }
+      
       
     }
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 

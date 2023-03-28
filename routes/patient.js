@@ -10,7 +10,7 @@ const TeleConEntry = require("../models/TeleConEntry");
 //update patient details
 router.post("/update/:id", authenticateToken ,async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 300)){
+  if(!checkPermissions(req.permissions, [300])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -44,37 +44,37 @@ router.post("/update/:id", authenticateToken ,async (req, res) => {
       res.status(200).json(others);
     }
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
-router.get("/search", async (req, res) => {
-  console.log(req.query.field);
-  try {
-    let result = await Patient.aggregate([
-      {
-        $search: {
-          autocomplete: {
-            query: `${req.query.query}`,
-            path: `${req.query.field}`,
-            fuzzy: {
-              maxEdits: 2,
-              prefixLength: 3,
-            },
-          },
-        },
-      },
-    ]);
-    res.send(result);
-  } catch (e) {
-    res.status(500).send({ message: e.message });
-  }
-});
+// router.get("/search", async (req, res) => {
+//   console.log(req.query.field);
+//   try {
+//     let result = await Patient.aggregate([
+//       {
+//         $search: {
+//           autocomplete: {
+//             query: `${req.query.query}`,
+//             path: `${req.query.field}`,
+//             fuzzy: {
+//               maxEdits: 2,
+//               prefixLength: 3,
+//             },
+//           },
+//         },
+//       },
+//     ]);
+//     res.send(result);
+//   } catch (e) {
+//     return res.status(500).json({ error: err, message: "Internal Server Error!" });
+//   }
+// });
 
 // get all patients
 router.get("/get", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 300)){
+  if(!checkPermissions(req.permissions, [300])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -101,8 +101,9 @@ router.get("/get", authenticateToken, async (req, res) => {
     filter = {patient_id: sort}
   }
 
-  try {
-    if(search !==""){
+  if(search !==""){
+
+    try{
       const patients = await Patient.find(
         {clinician_id: req._id, 
           $or: [
@@ -115,25 +116,32 @@ router.get("/get", authenticateToken, async (req, res) => {
       ).sort(filter).skip((page-1)*pageSize).limit(pageSize);
   
       return res.status(200).json({ patients: patients });
+    }catch(err){
+      return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
 
-    }else{
+  }else{
+
+    try {
       const patients = await Patient.find(
         {clinician_id: req._id},
         { _id: 1, gender: 1, patient_name: 1, patient_id: 1, DOB: 1 }
       ).sort(filter).skip((page-1)*pageSize).limit(pageSize);
   
       return res.status(200).json({ patients: patients });
+
+    }catch(err){
+      return res.status(500).json({ error: err, message: "Internal Server Error!" });
     }
     
-  } catch (err) {
-    return res.status(500).json({ message: err });
   }
+    
 });
 
-// check a patients
+// check if a patient exists
 router.post("/check", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 300)){
+  if(!checkPermissions(req.permissions, [300])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -150,16 +158,17 @@ router.post("/check", authenticateToken, async (req, res) => {
     }
 
   } catch (err) {
-    return res.status(500).json({ message: err });
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // get one patient
 router.get("/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 300)){
+  if(!checkPermissions(req.permissions, [300])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
+
   try {
     const patient = await Patient.findOne({
       _id: req.params.id,
@@ -171,8 +180,9 @@ router.get("/:id", authenticateToken, async (req, res) => {
     } else {
       return res.status(404).json({ message: "Patient not found" });
     }
+
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
@@ -181,7 +191,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
 // id is patients _id
 router.get("/shared/:id", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 200)){
+  if(!checkPermissions(req.permissions, [200])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -199,15 +209,16 @@ router.get("/shared/:id", authenticateToken, async (req, res) => {
     } else {
       return res.status(404).json({ message: "Patient not found" });
     }
+
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
 // get available reviewers
 router.get("/reviewer/all", authenticateToken, async (req, res) => {
 
-  if(!checkPermissions(req.permissions, 300)){
+  if(!checkPermissions(req.permissions, [300, 200])){
     return res.status(401).json({ message: "Unauthorized access"});
   }
 
@@ -220,15 +231,16 @@ router.get("/reviewer/all", authenticateToken, async (req, res) => {
     roles.forEach(element => {
       roleArray.push(element.role)
     });
-    const reviwers = await User.find({ "role": { $in: roleArray }, "availability":true},{username:1,reg_no:1});
 
-    if (reviwers) {
-      return res.status(200).json(reviwers);
+    const reviewers = await User.find({ "role": { $in: roleArray }, "availability":true},{username:1,reg_no:1});
+
+    if (reviewers) {
+      return res.status(200).json(reviewers);
     } else {
-      return res.status(404).json({ message: "Reviwers not found" });
+      return res.status(404).json({ message: "Reviewers Not Found" });
     }
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
 
