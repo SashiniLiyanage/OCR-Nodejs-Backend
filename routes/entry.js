@@ -570,8 +570,7 @@ router.post("/review/:id", authenticateToken, async (req, res) => {
                 })
 
                 entry.updated = true;
-                entry.save();
-
+                
             }catch(err){
                 console.log(err);
                 //ignore the error

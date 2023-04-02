@@ -57,7 +57,7 @@ const refreshToken = async (token, ipAddress) => {
 
 
     var user = await User.findById(refreshToken.user).lean();
-
+    const rolePermissions = await Role.findOne({ role: user.role});
     // Replace the old refresh token with a new one.
     const newRefreshToken = generateRefreshToken(refreshToken.user, ipAddress);
     refreshToken.revokedAt = Date.now();
@@ -70,7 +70,8 @@ const refreshToken = async (token, ipAddress) => {
     return {
         accessToken: accessToken,
         refreshToken: newRefreshToken.token,
-        ref: user
+        ref: user,
+        permissions: rolePermissions.permissions
     };
 };
 

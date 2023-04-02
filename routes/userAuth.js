@@ -100,16 +100,16 @@ router.post("/login", async (req, res) => {
 router.post("/refreshToken", async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) return res.status(400).json({ success: false, message: "Token is required" });
-
   const ipAddress = req.ip;
 
   refreshToken(token, ipAddress)
-    .then(({ accessToken, refreshToken, ref }) => {
+    .then(({ accessToken, refreshToken, ref, permissions }) => {
       setTokenCookie(res, refreshToken);
       res.json({
         success: true,
         message: "Refresh token successful",
         ref: ref,
+        permissions: permissions,
         accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME },
       });
     })

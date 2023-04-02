@@ -5,6 +5,22 @@ const { authenticateToken } = require("../middleware/auth");
 
 require("dotenv").config();
 
+// get a user 
+router.get("/", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req._id);
+
+    if (user) {
+      user.password = undefined;
+      return res.status(200).json(user);
+    } else {
+      return res.status(404).json({ message: "User not found" });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
+  }
+});
+
 // get hospital list on signup page
 router.get("/hospitals", async (req, res) => {
   try {
