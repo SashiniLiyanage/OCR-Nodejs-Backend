@@ -14,6 +14,6 @@ RUN npm install
 # RUN npm ci --omit=dev
 
 
-EXPOSE 8080
+EXPOSE 5000
 USER 10014
 CMD [ "node", "server.js" ]
