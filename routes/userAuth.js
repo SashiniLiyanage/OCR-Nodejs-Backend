@@ -18,9 +18,15 @@ const {
 router.post("/signup", async (req, res) => {
   try {
     const reqreg = await Request.findOne({ reg_no: req.body.reg_no });
+    consol.log("1" , reqreg)
     const reqemail = await Request.findOne({ email: req.body.email });
+    consol.log("2" , reqmail)
     const userregno = await User.findOne({ reg_no: req.body.reg_no });
+    consol.log("3" , userregno)
     const email = await User.findOne({ email: req.body.email });
+    consol.log("4" , email)
+    
+   
 
     if (userregno) {
       return res.status(401).json({ message: "The Reg No is already registered" });
