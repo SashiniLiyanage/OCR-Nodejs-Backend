@@ -17,6 +17,7 @@ const {
 // add to request list
 router.post("/signup", async (req, res) => {
   try {
+    consol.log(" start ")
     const reqreg = await Request.findOne({ reg_no: req.body.reg_no });
     consol.log("1" , reqreg)
     const reqemail = await Request.findOne({ email: req.body.email });
