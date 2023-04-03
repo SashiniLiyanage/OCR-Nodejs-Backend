@@ -17,15 +17,15 @@ const {
 // add to request list
 router.post("/signup", async (req, res) => {
   try {
-    console.log(" start ")
+    //console.log(" start ")
     const reqreg = await Request.findOne({ reg_no: req.body.reg_no });
-    console.log("1" , reqreg)
+    //console.log("1" , reqreg)
     const reqemail = await Request.findOne({ email: req.body.email });
-    console.log("2" , reqmail)
+    //console.log("2" , reqmail)
     const userregno = await User.findOne({ reg_no: req.body.reg_no });
-    console.log("3" , userregno)
+    //console.log("3" , userregno)
     const email = await User.findOne({ email: req.body.email });
-    console.log("4" , email)
+    //console.log("4" , email)
     
    
 
