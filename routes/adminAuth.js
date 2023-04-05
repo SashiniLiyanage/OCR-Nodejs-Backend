@@ -3,6 +3,14 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 
+router.post("/signup", async (req, res) => {
+  try {
+    const username = await User.find();
+    res.status(200).json(username);
+  } catch (err) {
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
+  }
+});
 // only to add initial admin
 // admin sign up
 router.post("/signup", async (req, res) => {
