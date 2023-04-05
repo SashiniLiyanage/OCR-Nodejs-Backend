@@ -15,8 +15,12 @@ router.post("/signup", async (req, res) => {
     } else if (useremail) {
       res.status(401).json({ message: "The email address is already in use" });
     } else {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      try{
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      }catch(err){
+        return res.status(500).json({ error: err, message: "Internal Server Error1!" });
+      }
       const newUser = new User({
         reg_no: req.body.reg_no,
         username: req.body.username,
@@ -31,7 +35,7 @@ router.post("/signup", async (req, res) => {
       res.status(200).json(others);
     }
   } catch (err) {
-    return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    return res.status(500).json({ error: err, message: "Internal Server Error2!" });
   }
 });
 
