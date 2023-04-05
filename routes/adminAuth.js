@@ -7,8 +7,12 @@ const bcrypt = require("bcrypt");
 // admin sign up
 router.post("/signup", async (req, res) => {
   try {
+    try{
     const username = await User.findOne({ username: req.body.username });
     const useremail = await User.findOne({ email: req.body.email });
+    }catch(err){
+      return res.status(500).json({ error: err, message: "Internal Server Error0!" });
+    }
 
     if (username) {
       res.status(401).json({ message: "User name is taken" });
