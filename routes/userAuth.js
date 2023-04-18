@@ -99,7 +99,7 @@ router.post("/login", async (req, res) => {
 
     res.status(200).json({accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME }, ref: user, others});
 
-  } catch (error) {
+  } catch (err) {
     return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
