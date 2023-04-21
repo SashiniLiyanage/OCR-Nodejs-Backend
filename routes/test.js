@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Role = require("../models/Role");
 const bcrypt = require("bcrypt");
 
 // testing purpose
@@ -65,4 +66,32 @@ router.post("/testend", async (req, res) => {
     }
 });
 
+router.post("/roles", async (req, res) => {
+  try {
+
+    //case insensitive search
+    const role = await Role.findOne({role: {$regex: `^${req.body.role}$`, $options: "i"}});
+    
+    if(!role){
+
+      const newRole = new Role({
+        role: req.body.role,
+        permissions: req.body.permissions
+      });
+  
+      try {
+        const addrole = await newRole.save();
+        return res.status(200).json({ message: "New role added successfully"});
+      }catch(err){
+        return res.status(500).json({ message: "New role insertion failed" });
+      }
+
+
+    }else{
+        return res.status(401).json({message:"Role already exists"});
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err, message: "Internal Server Error!" });
+  }
+});
 module.exports = router;
