@@ -76,27 +76,28 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: "Wrong credentials!" });
-
+    console.log("point1");
     const validate = await bcrypt.compare(req.body.password, user.password);
     if (!validate) return res.status(400).json({ message: "Wrong credentials!" });
-
+    console.log("point2");
     const accessToken = jwt.sign(
       { sub: user.email, role: user.role },
       process.env.ACCESS_SECRET,
       { expiresIn: process.env.REFRESH_TIME }
     );
+    console.log("point3");
     const refreshToken = generateRefreshToken(user, req.ip);
     await refreshToken.save();
-
+    console.log("point4");
     setTokenCookie(res, refreshToken.token);
-
+    console.log("point5");
     const rolePermissions = await Role.findOne({ role: user.role});
-
+    console.log("point6");
     // send the user data and refresh, access tokens
     const { password, ...others } = user._doc;
     others["message"] = "Successfuly logged in";
     others["permissions"] = rolePermissions.permissions;
-
+    console.log("point7");
     res.status(200).json({accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME }, ref: user, others});
 
   } catch (err) {
