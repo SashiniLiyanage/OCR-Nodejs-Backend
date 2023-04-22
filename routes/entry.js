@@ -78,6 +78,8 @@ router.get("/get", authenticateToken, async (req, res) => {
         condition["reviews.0"] = {"$exists": true}
     }else if(req.query.filter && req.query.filter === "Unreviewed"){
         condition["reviews"] = { $size: 0 }
+    }else if(req.query.filter && req.query.filter === "Newly Reviewed"){
+        condition["updated"] = true
     }
 
     try {
@@ -204,6 +206,40 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
             return res.status(404).json({message:"Entry not found"});
         }
         
+            
+    } catch (err) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
+});
+
+// get new reviews count 
+router.get("/count/newreviews", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [300])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+        const count = await TeleConEntry.where({clinician_id: req._id, updated: true}).count();
+
+        return res.status(200).json({count});
+            
+    } catch (err) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
+});
+
+// get unreviewed entry count 
+router.get("/count/newentries", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [200])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+        const count = await Assignment.where({reviewer_id: req._id, reviewed: false}).count();
+
+        return res.status(200).json({count});
             
     } catch (err) {
         return res.status(500).json({ error: err, message: "Internal Server Error!" });
