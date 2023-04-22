@@ -32,48 +32,6 @@ app.get("/", (req, res) => {
 });
 
 
-// this code is here only to check email template
-app.get("/sendemail", (req, res) => {
-  emailService
-  .sendEmail("saadiajameel54@gmail.com", "ACCEPT", "", "Saadia")
-  .then((response) => {
-    res.status(200).json({ message: "Email is sent!" });
-  })
-  .catch((error) => {
-    res.status(200).json({message:"Email notification Failed"});
-  });
-});
-
-
-app.get("/getpercentage", async (req, res) => {
-  Patient.aggregate([
-    { $unwind: "$risk_factors" },
-    { $group: { _id: "$risk_factors.habit", count: { $sum: 1 } } },
-    { $project: { _id: 0, item: "$_id", count: 1 } }
-  ], function(err, results) {
-    if (err) {
-      res.send(err);
-    } else {
-      Patient.countDocuments({}, function(err, count) {
-        if (err) {
-          res.send(err);
-        } else {
-          const arr = []
-          results.forEach(result => {
-            const percentage = (result.count / count) * 100;
-            arr.push(`${result.item}: ${percentage}%`);
-          });  
-
-          res.send(arr)
-        }
-      });
-    }
-  });
-  
-  
-});
-
-
 // import routes
 const userAuthRoute = require("./routes/userAuth");
 app.use("/api/auth", userAuthRoute);

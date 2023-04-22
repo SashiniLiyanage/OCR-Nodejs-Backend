@@ -139,7 +139,7 @@ router.get("/get", authenticateToken, async (req, res) => {
 });
 
 // check if a patient exists
-router.post("/check", authenticateToken, async (req, res) => {
+router.get("/check/:id", authenticateToken, async (req, res) => {
 
   if(!checkPermissions(req.permissions, [300])){
     return res.status(401).json({ message: "Unauthorized access"});
@@ -147,7 +147,7 @@ router.post("/check", authenticateToken, async (req, res) => {
 
   try {
     const patients = await Patient.findOne(
-      {clinician_id: req._id, patient_id:req.body.patient_id},
+      {clinician_id: req._id, patient_id:req.params.id},
       { _id: 1}
     );
 
