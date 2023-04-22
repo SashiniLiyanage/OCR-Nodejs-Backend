@@ -17,10 +17,17 @@ const {
 // add to request list
 router.post("/signup", async (req, res) => {
   try {
+    //console.log(" start ")
     const reqreg = await Request.findOne({ reg_no: req.body.reg_no });
+    //console.log("1" , reqreg)
     const reqemail = await Request.findOne({ email: req.body.email });
+    //console.log("2" , reqmail)
     const userregno = await User.findOne({ reg_no: req.body.reg_no });
+    //console.log("3" , userregno)
     const email = await User.findOne({ email: req.body.email });
+    //console.log("4" , email)
+    
+   
 
     if (userregno) {
       return res.status(401).json({ message: "The Reg No is already registered" });
@@ -60,7 +67,7 @@ router.post("/signup", async (req, res) => {
       }
     }
   } catch (error) {
-    return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    return res.status(500).json({ error: error, message: "Internal Server Error! 2" });
   }
 });
 
@@ -69,30 +76,30 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: "Wrong credentials!" });
-
+    
     const validate = await bcrypt.compare(req.body.password, user.password);
     if (!validate) return res.status(400).json({ message: "Wrong credentials!" });
-
+    
     const accessToken = jwt.sign(
       { sub: user.email, role: user.role },
       process.env.ACCESS_SECRET,
       { expiresIn: process.env.REFRESH_TIME }
     );
+    
     const refreshToken = generateRefreshToken(user, req.ip);
     await refreshToken.save();
-
+    
     setTokenCookie(res, refreshToken.token);
-
     const rolePermissions = await Role.findOne({ role: user.role});
-
+    
     // send the user data and refresh, access tokens
     const { password, ...others } = user._doc;
     others["message"] = "Successfuly logged in";
     others["permissions"] = rolePermissions.permissions;
-
+    
     res.status(200).json({accessToken: { token: accessToken, expiry: process.env.REFRESH_TIME }, ref: user, others});
 
-  } catch (error) {
+  } catch (err) {
     return res.status(500).json({ error: err, message: "Internal Server Error!" });
   }
 });
