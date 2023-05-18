@@ -40,7 +40,6 @@ router.get("/requests/:id", authenticateToken, async (req, res) => {
     const request = await Request.findById(req.params.id);
 
     if (request) {
-      request.password = undefined;
       return res.status(200).json(request);
     } else {
       return res.status(404).json({ message: "Request not found" });
@@ -68,14 +67,14 @@ router.post("/requests/:id", authenticateToken, async (req, res) => {
         emailService
           .sendEmail(request.email, "REJECT", req.body.reason, request.username)
           .then((response) => {
-            res.status(200).json({ message: "Request has been deleted!" });
+            return res.status(200).json({ message: "Request has been deleted!" });
           })
           .catch((error) => {
-            res.status(200).json({
+            return res.status(200).json({
               message:
                 "Request has been deleted! Error: Email notification Failed",
             });
-            return res.status(200).json(others);
+            
           });
       } catch (error) {
         return res.status(500).json({ message: "Request deletion failed" });
@@ -112,7 +111,6 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
       const newUser = new User({
         username: req.body.username? req.body.username: request.username,
         email: request.email,
-        password: request.password,
         reg_no: request.reg_no,
         role: req.body.role,
         hospital: request.hospital,
@@ -123,19 +121,19 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
 
       try {
         const adduser = await newUser.save();
-        const { password, ...others } = adduser._doc;
+        const details = adduser._doc;
         await Request.findByIdAndDelete(req.params.id);
 
         emailService
           .sendEmail(request.email, "ACCEPT", req.body.reason, request.username)
           .then((response) => {
-            others["message"] = "User registration successful!";
-            return res.status(200).json(others);
+            details["message"] = "User registration successful!";
+            return res.status(200).json(details);
           })
           .catch((error) => {
-            others["message"] =
+            details["message"] =
               "User registration successful! Error: Email notification Failed. ";
-            return res.status(200).json(others);
+            return res.status(200).json(details);
           });
       } catch (error) {
         return res.status(500).json({ message: "User registration failed" });
@@ -290,7 +288,6 @@ router.get("/users/:id", authenticateToken, async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-      user.password = undefined;
       return res.status(200).json(user);
     } else {
       return res.status(404).json({ message: "User not found" });
@@ -322,9 +319,9 @@ router.post("/update/user/:id", authenticateToken, async (req, res) => {
 
         user = await User.findById(req.params.id);
 
-        const { password, ...others } = user._doc;
-        others["message"] = "User details updated succesfully";
-        return res.status(200).json(user);
+        const details = user._doc;
+        details["message"] = "User details updated succesfully";
+        return res.status(200).json(details);
       } catch (error) {
         return res.status(500).json({ message: "User details update failed" });
       }
@@ -349,39 +346,6 @@ router.post("/delete/user/:id", authenticateToken, async (req, res) => {
       try {
         await User.findByIdAndDelete(req.params.id);
         return res.status(200).json({ message: "User deleted successfully" });
-      } catch (error) {
-        return res.status(500).json({ message: "User deletion failed" });
-      }
-    } else {
-      return res.status(404).json({ message: "User not found" });
-    }
-  } catch (err) {
-    return res.status(500).json({ error: err, message: "Internal Server Error!" });
-  }
-});
-
-// reset user password
-router.post("/reset/user/:id", authenticateToken, async (req, res) => {
-
-  if(!checkPermissions(req.permissions, [107])){
-    return res.status(401).json({ message: "Unauthorized access"});
-  }
-
-  try {
-    let user = await User.findById(req.params.id);
-    if (user) {
-      try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
-        const update = await User.findOneAndUpdate(
-          { _id: req.params.id },
-          {
-            password: hashedPassword,
-          }
-        );
-
-        return res.status(200).json({ message: "User password reseted successfully" });
       } catch (error) {
         return res.status(500).json({ message: "User deletion failed" });
       }

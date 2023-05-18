@@ -25,37 +25,25 @@ router.post("/testend", async (req, res) => {
             return res.status(500).json({ error: err, message: "Internal Server Error0!" });
         }
 
-        let hashedPassword = null;
         if (username) {
             console.log("Iam here 1");
             res.status(401).json({ message: "User name is taken" });
         } else if (useremail) {
             res.status(401).json({ message: "The email address is already in use" });
         } else {
-
-            try {
-                console.log("Iam here 2");
-                const salt = await bcrypt.genSalt(10);
-                hashedPassword = await bcrypt.hash(req.body.password, salt);
-                console.log("Iam here 3");
-            } catch (err) {
-                return res.status(500).json({ error: err, message: "Internal Server Error1!" });
-            }
-
             console.log("Iam here 4");
             const newUser = new User({
                 reg_no: req.body.reg_no,
                 username: req.body.username,
                 email: req.body.email,
-                password: hashedPassword,
                 hospital: req.body.hospital,
                 role: "System Admin",
             });
             console.log("Iam here 5");
             const user = await newUser.save();
-            const { password, ...others } = user._doc;
-            others["message"] = "Successfully signed in";
-            res.status(200).json(others);
+            const details = user._doc;
+            details["message"] = "Successfully signed in";
+            res.status(200).json(details);
 
         }
 
