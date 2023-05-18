@@ -27,10 +27,6 @@ const RequestSchema = new mongoose.Schema(
     contact_no: {
       type: String,
       default: "",
-    },
-    password: {
-      type: String,
-      required: true,
     }
   },
   {
