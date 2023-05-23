@@ -12,7 +12,6 @@ const { authenticateToken, checkPermissions } = require("../../middleware/auth")
 
 // add a draft teleconsultation entry
 router.post("/add/:id", authenticateToken, async (req, res) => {
-    console.log("draftentry/add called")
 
     if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
@@ -32,13 +31,13 @@ router.post("/add/:id", authenticateToken, async (req, res) => {
             findings: req.body.findings,
             current_habits: req.body.current_habits
           });
+          //console.log("new entry id is ",newDraftEntry._id);
+
 
           try{
             const savedEntry = await newDraftEntry.save();
-            console.log("entry saved successfully")
             res.status(200).json(savedEntry);
           }catch(err){
-            console.log("entry NOT saved")
             res.status(500).json({message: "Draft Tele consultation entry failed" });
           }
 

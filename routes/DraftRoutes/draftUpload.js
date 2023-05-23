@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const Report = require("../../models/draftModels/DraftReport");
-const Image = require("../../models/draftModels/DraftImage");
+const DraftReport = require("../../models/draftModels/DraftReport");
+const DraftImage = require("../../models/draftModels/DraftImage");
 const path = require("path");
-const TeleConEntry = require("../../models/draftModels/DraftEntry");
+const DraftEntry = require("../../models/draftModels/DraftEntry");
 const multer = require("multer");
 const fs = require("fs");
 const { authenticateToken, checkPermissions } = require("../../middleware/auth");
@@ -58,8 +58,8 @@ router.post("/images/:id", authenticateToken, async (req, res) => {
     
     try {
         // check for the existence of the entry
-        const teleConEntry = await TeleConEntry.findOne({ _id: req.params.id});
-        if (teleConEntry && teleConEntry.clinician_id !== req._id) {
+        const draftEntry = await DraftEntry.findOne({ _id: req.params.id});
+        if (draftEntry && draftEntry.clinician_id !== req._id) {
             // upload images
             uploadImages(req, res, function (err) {
             if (err instanceof multer.MulterError) {
@@ -72,14 +72,14 @@ router.post("/images/:id", authenticateToken, async (req, res) => {
 
                 const data = JSON.parse(others.data)
                 // images are created in bulk below
-                Image.insertMany(data, function (error, docs) {
+                DraftImage.insertMany(data, function (error, docs) {
                 if (error) {
                     return res.status(500).json({ error: error, message: "Internal Server Error!" });
                 } else {
                     docs.forEach((doc) => {
-                        teleConEntry.images.push(doc._id);
+                        draftEntry.images.push(doc._id);
                     });
-                    teleConEntry.save();
+                    draftEntry.save();
                     return res.status(200).json({ docs, message: "Images Uploaded Successfully" });
                 }
                 });
@@ -103,8 +103,8 @@ router.post("/reports/:id", authenticateToken, async (req, res) => {
     
     try {
         // check for the existence of the entry
-        const teleConEntry = await TeleConEntry.findOne({ _id: req.params.id});
-        if (teleConEntry && teleConEntry.clinician_id !== req._id) {
+        const draftEntry = await DraftEntry.findOne({ _id: req.params.id});
+        if (draftEntry && draftEntry.clinician_id !== req._id) {
             // upload images
             uploadDocuments(req, res, function (err) {
             if (err instanceof multer.MulterError) {
@@ -117,14 +117,14 @@ router.post("/reports/:id", authenticateToken, async (req, res) => {
                 const { files, ...others } = req.body;
                 const data = JSON.parse(others.data)
                 // reports are created in bulk below
-                Report.insertMany(data, function (error, docs) {
+                DraftReport.insertMany(data, function (error, docs) {
                 if (error) {
                     return res.status(500).json({ error: error, message: "Internal Server Error!" });
                 } else {
                     docs.forEach((doc) => {
-                        teleConEntry.reports.push(doc._id);
+                        draftEntry.reports.push(doc._id);
                     });
-                    teleConEntry.save();
+                    draftEntry.save();
                     return res.status(200).json({ docs, message: "reports Uploaded Successfully" });
                 }
                 });
