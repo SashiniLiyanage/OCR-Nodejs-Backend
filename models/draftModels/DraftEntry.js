@@ -37,10 +37,6 @@ const DraftTeleConEntrySchema = new mongoose.Schema(
       default:false
     },
 
-    // reviewers , reviews need in draft entry ?
-    reviewers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
-
 
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DraftImage' }],
     reports: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DraftReport' }]
