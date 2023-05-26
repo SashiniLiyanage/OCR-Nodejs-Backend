@@ -682,6 +682,9 @@ function sendEmail(recieversEmail, type, message, name){
             auth:{
                 user: process.env.SENDERS_EMAIL,
                 pass: process.env.SENDERS_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
             }
         })
 
@@ -695,6 +698,7 @@ function sendEmail(recieversEmail, type, message, name){
 
         transporter.sendMail(mail_config, function(error, info){
             if(error){
+                console.log(error)
                 return reject({message: 'Error sending emails'})
             }
 

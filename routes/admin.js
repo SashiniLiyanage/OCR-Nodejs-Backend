@@ -128,12 +128,12 @@ router.post("/accept/:id", authenticateToken, async (req, res) => {
           .sendEmail(request.email, "ACCEPT", req.body.reason, request.username)
           .then((response) => {
             details["message"] = "User registration successful!";
-            return res.status(200).json(details);
+            res.status(200).json(details);
           })
           .catch((error) => {
             details["message"] =
               "User registration successful! Error: Email notification Failed. ";
-            return res.status(200).json(details);
+              res.status(200).json(details);
           });
       } catch (error) {
         return res.status(500).json({ message: "User registration failed" });
