@@ -148,11 +148,11 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
             {}
         )
        // .populate('reviewers', "username _id reg_no")
-        .populate('patient', "patient_name patient_id _id")
+        .populate('patient', 'patient_name patient_id _id')
         .populate('images')
         .populate('reports')
 
-        if(entry){
+        if(draftEntry){
             return res.status(200).json(draftEntry);
         }else{
             return res.status(404).json({message:"Draft Entry not found"});
@@ -160,7 +160,9 @@ router.get("/get/:id", authenticateToken, async (req, res) => {
         
             
     } catch (err) {
+        console.log(err);
         return res.status(500).json({ error: err, message: "Internal Server Error!" });
+        
     }
 });
 
