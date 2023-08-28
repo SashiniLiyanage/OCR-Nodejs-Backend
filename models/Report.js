@@ -11,6 +11,10 @@ const ReportSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    status: {
+      type: String,
+      default: "draft",
+    },
   },
   {
     versionKey: false,

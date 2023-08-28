@@ -28,6 +28,10 @@ const TeleConEntrySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    status:{
+      type: String,
+      default:'draft'
+    },
     current_habits: {
       type: Array,
       default: [],

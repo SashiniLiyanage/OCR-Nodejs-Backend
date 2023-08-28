@@ -6,11 +6,52 @@ const Image = require("../models/Image");
 const Report = require("../models/Report");
 const Review = require("../models/Review");
 const Assignment = require("../models/Assignment");
+const fs = require('fs');
+const path = require("path");
 
 const { authenticateToken, checkPermissions } = require("../middleware/auth");
 
+let imagePath = path.join(__dirname, "../Storage/images/");
+let reportPath = path.join(__dirname, "../Storage/reports/");
+
 // add a teleconsultation entry
-router.post("/add/:id", authenticateToken, async (req, res) => {
+// router.post("/add/:id", authenticateToken, async (req, res) => {
+
+//     if(!checkPermissions(req.permissions, [300])){
+//         return res.status(401).json({ message: "Unauthorized access"});
+//     }
+
+//     try {
+//       const patient = await Patient.findOne({ clinician_id: req._id, _id: req.params.id });
+  
+//       if (patient) {
+        
+//           const newEntry = new TeleConEntry({
+//             patient: patient._id,
+//             clinician_id: req._id,
+//             start_time: req.body.start_time,
+//             end_time: req.body.end_time,
+//             complaint: req.body.complaint,
+//             findings: req.body.findings,
+//             current_habits: req.body.current_habits
+//           });
+
+//           try{
+//             const savedEntry = await newEntry.save();
+//             res.status(200).json(savedEntry);
+//           }catch(err){
+//             res.status(500).json({message: "Tele consultation entry failed" });
+//           }
+
+//         } else {
+//           return res.status(404).json({ message: "Patient is not registered" });
+//         }
+
+//     } catch (error) {
+//         return res.status(500).json({ error: err, message: "Internal Server Error!" });
+//     }
+// });
+router.post("/new/:id", authenticateToken, async (req, res) => {
 
     if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
@@ -19,27 +60,162 @@ router.post("/add/:id", authenticateToken, async (req, res) => {
     try {
       const patient = await Patient.findOne({ clinician_id: req._id, _id: req.params.id });
   
-      if (patient) {
+        if (patient) {
         
-          const newEntry = new TeleConEntry({
-            patient: patient._id,
-            clinician_id: req._id,
-            start_time: req.body.start_time,
-            end_time: req.body.end_time,
-            complaint: req.body.complaint,
-            findings: req.body.findings,
-            current_habits: req.body.current_habits
-          });
+            const newEntry = new TeleConEntry({
+                patient: patient._id,
+                clinician_id: req._id
+            });
 
-          try{
-            const savedEntry = await newEntry.save();
-            res.status(200).json(savedEntry);
-          }catch(err){
-            res.status(500).json({message: "Tele consultation entry failed" });
-          }
+            try{
+                const savedEntry = await newEntry.save();
+                res.status(200).json(savedEntry);
+            }catch(err){
+                res.status(500).json({message: "Entry creation failed" });
+            }
 
         } else {
-          return res.status(404).json({ message: "Patient is not registered" });
+            return res.status(404).json({ message: "Patient is not registered" });
+        }
+
+    } catch (error) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
+});
+
+// update draft entry
+router.post("/update/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [300])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+        const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id, status:"draft"});
+  
+        if (entry) {
+        
+            try{
+                await TeleConEntry.findByIdAndUpdate(entry._id,{
+                    start_time : req.body.start_time,
+                    end_time : req.body.start_time,
+                    complaint: req.body.complaint,
+                    findings: req.body.findings,
+                    current_habits: req.body.current_habits
+                })
+                
+                return res.status(200).json({ message: "Entry is updated" });
+
+            }catch(err){
+                res.status(500).json({message: "Entry update failed" });
+            }
+
+        } else {
+            return res.status(404).json({ message: "Entry not found" });
+        }
+
+    } catch (error) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
+});
+
+router.post("/save/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [300])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+        const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id, status:"draft"});
+  
+        if (entry) {
+
+            try{
+                await Image.updateMany({ _id: { $in: entry.images } },{status: "New"});
+                await Report.updateMany({ _id: { $in: entry.reports } },{status: "New"});
+            }catch(error){
+                console.log("error in updating status: ",error)
+            }
+        
+            try{
+                await TeleConEntry.findByIdAndUpdate(entry._id,{
+                    start_time : req.body.start_time,
+                    end_time : req.body.start_time,
+                    complaint: req.body.complaint,
+                    findings: req.body.findings,
+                    current_habits: req.body.current_habits,
+                    status: "saved"
+                })
+                
+                return res.status(200).json({ message: "Entry is updated" });
+
+            }catch(err){
+                res.status(500).json({message: "Entry update failed" });
+            }
+
+        } else {
+            return res.status(404).json({ message: "Entry not found" });
+        }
+
+    } catch (error) {
+        return res.status(500).json({ error: err, message: "Internal Server Error!" });
+    }
+});
+
+// delete draft entry
+router.post("/delete/:id", authenticateToken, async (req, res) => {
+
+    if(!checkPermissions(req.permissions, [300])){
+        return res.status(401).json({ message: "Unauthorized access"});
+    }
+
+    try {
+        const entry = await TeleConEntry.findOne({ clinician_id: req._id, _id: req.params.id, status:"draft"});
+  
+        if (entry) {
+            
+            
+                entry.images?.forEach(async _id => {
+                    try {
+                        const deletedImage = await Image.findByIdAndDelete(_id);
+                
+                        fs.unlink(imagePath + deletedImage.image_name, (err) => {
+                            if (err) {
+                                console.error(err);
+                            }
+                        });
+                            
+                    } catch (error) {
+                        console.error('Error deleting image:', error);
+                    }
+                });
+
+                entry.reports?.forEach(async _id => {
+                    try {
+                        const deletedReport = await Report.findByIdAndDelete(_id);
+                
+                        fs.unlink(reportPath + deletedReport.report_name, (err) => {
+                            if (err) {
+                                console.error(err);
+                            }
+                        });
+                            
+                    } catch (error) {
+                        console.error('Error deleting report:', error);
+                    }
+                });
+
+            try{
+                await TeleConEntry.findByIdAndDelete(entry._id)
+                
+                return res.status(200).json({ message: "Entry is deleted" });
+
+            }catch(err){
+                res.status(500).json({message: "Entry deletion failed" });
+            }
+
+        } else {
+            return res.status(404).json({ message: "Entry not found" });
         }
 
     } catch (error) {
@@ -49,7 +225,7 @@ router.post("/add/:id", authenticateToken, async (req, res) => {
 
 
 // get all entries added by user
-router.get("/get", authenticateToken, async (req, res) => {
+router.get("/get/:status", authenticateToken, async (req, res) => {
 
     if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
@@ -68,7 +244,7 @@ router.get("/get", authenticateToken, async (req, res) => {
         filter = {createdAt: -1}
     }
 
-    var condition = {clinician_id: req._id}
+    var condition = {clinician_id: req._id, status: req.params.status}
     
     if(req.query.filter && req.query.filter === "Assigned"){
         condition["reviewers.0"] = {"$exists": true}
@@ -116,7 +292,7 @@ router.get("/get/patient/:id", authenticateToken, async (req, res) => {
 
     try {
         const entries = await TeleConEntry.find(
-            {clinician_id: req._id, patient: req.params.id},
+            {clinician_id: req._id, patient: req.params.id, status:"saved"},
             {}
         )
         .populate('reviewers', 'username') // Only select the name
@@ -184,21 +360,33 @@ router.get("/shared/patient/:id", authenticateToken, async (req, res) => {
 
 // get one entry details added by users
 // id is entry _id
-router.get("/get/:id", authenticateToken, async (req, res) => {
+router.get("/get/:status/:id", authenticateToken, async (req, res) => {
 
     if(!checkPermissions(req.permissions, [300])){
         return res.status(401).json({ message: "Unauthorized access"});
     }
 
     try {
-        const entry = await TeleConEntry.findOne(
-            {clinician_id: req._id, _id:req.params.id},
-            {}
-        )
-        .populate('reviewers', "username _id reg_no")
-        .populate('patient', "patient_name patient_id _id")
-        .populate('images')
-        .populate('reports')
+
+        var entry = null;
+        if(req.params.status === 'draft'){
+
+                entry = await TeleConEntry.findOne(
+                {clinician_id: req._id, _id:req.params.id, status:req.params.status},
+                {}
+            )
+            .populate('patient', "patient_name patient_id _id")
+
+        }else{
+                entry = await TeleConEntry.findOne(
+                {clinician_id: req._id, _id:req.params.id, status:req.params.status},
+                {}
+            )
+            .populate('reviewers', "username _id reg_no")
+            .populate('patient', "patient_name patient_id _id")
+            .populate('images')
+            .populate('reports')
+        }
 
         if(entry){
             return res.status(200).json(entry);

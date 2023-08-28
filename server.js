@@ -51,6 +51,9 @@ app.use("/api/admin/auth", adminAuthRoute);
 const imagesRoute = require("./routes/image");
 app.use("/api/image", imagesRoute);
 
+const reportRoute = require("./routes/report");
+app.use("/api/report", reportRoute);
+
 const adminRoute = require("./routes/admin");
 app.use("/api/admin", adminRoute);
 
@@ -60,14 +63,8 @@ app.use("/api/user/patient", patientRoute);
 const EntryRoute = require("./routes/entry");
 app.use("/api/user/entry", EntryRoute);
 
-const DraftEntryRoute = require("./routes/DraftRoutes/draftEntry");
-app.use("/api/user/draftentry", DraftEntryRoute);
-
 const UploadRoute = require("./routes/upload");
 app.use("/api/user/upload", UploadRoute);
-
-const DraftUploadRoute = require("./routes/DraftRoutes/draftUpload");
-app.use("/api/user/draftupload", DraftUploadRoute);
 
 const userRoute = require("./routes/user");
 app.use("/api/user/self", userRoute);

@@ -80,7 +80,7 @@ router.post("/images/:id", authenticateToken, async (req, res) => {
     
     try {
         // check for the existence of the entry
-        const teleConEntry = await TeleConEntry.findOne({ _id: req.params.id});
+        const teleConEntry = await TeleConEntry.findOne({ _id: req.params.id, status:"draft"});
         if (teleConEntry && teleConEntry.clinician_id !== req._id) {
             // upload images
             uploadImages(req, res, function (err) {

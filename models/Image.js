@@ -19,9 +19,9 @@ const ImageSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    lesions_appear: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      default: "draft",
     },
     annotation: {
       type: Array,
